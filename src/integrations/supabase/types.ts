@@ -2403,6 +2403,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      post_customer_payment: { Args: { p_payment: string }; Returns: string }
+      post_expense: { Args: { p_expense: string }; Returns: string }
+      post_invoice: { Args: { p_invoice: string }; Returns: string }
+      post_journal: {
+        Args: {
+          p_company: string
+          p_date: string
+          p_lines: Json
+          p_memo: string
+          p_ref_id: string
+          p_ref_label: string
+          p_ref_type: string
+          p_source?: string
+        }
+        Returns: string
+      }
+      post_supplier_bill: { Args: { p_bill: string }; Returns: string }
+      post_supplier_payment: { Args: { p_payment: string }; Returns: string }
+      resolve_exception: {
+        Args: { p_action: string; p_actor?: string; p_exception: string }
+        Returns: Json
+      }
     }
     Enums: {
       account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
