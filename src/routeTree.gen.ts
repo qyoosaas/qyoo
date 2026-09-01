@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppActionRequiredRouteImport } from './routes/_app/action-required'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +29,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppActionRequiredRoute = AppActionRequiredRouteImport.update({
+  id: '/action-required',
+  path: '/action-required',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
@@ -37,11 +43,13 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/action-required': typeof AppActionRequiredRoute
   '/overview': typeof AppOverviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/action-required': typeof AppActionRequiredRoute
   '/overview': typeof AppOverviewRoute
 }
 export interface FileRoutesById {
@@ -49,14 +57,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/action-required': typeof AppActionRequiredRoute
   '/_app/overview': typeof AppOverviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/overview'
+  fullPaths: '/' | '/auth' | '/action-required' | '/overview'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/overview'
-  id: '__root__' | '/' | '/_app' | '/auth' | '/_app/overview'
+  to: '/' | '/auth' | '/action-required' | '/overview'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/_app/action-required'
+    | '/_app/overview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/action-required': {
+      id: '/_app/action-required'
+      path: '/action-required'
+      fullPath: '/action-required'
+      preLoaderRoute: typeof AppActionRequiredRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/overview': {
       id: '/_app/overview'
       path: '/overview'
@@ -99,10 +121,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppActionRequiredRoute: typeof AppActionRequiredRoute
   AppOverviewRoute: typeof AppOverviewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppActionRequiredRoute: AppActionRequiredRoute,
   AppOverviewRoute: AppOverviewRoute,
 }
 
