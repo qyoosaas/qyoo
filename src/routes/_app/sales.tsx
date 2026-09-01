@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_app/sales")({
       { property: "og:description", content: "Orders to cash, posted automatically." },
     ],
   }),
-  component: Sales;
+  component: Sales,
 });
 
 const TABS = ["Invoices", "Orders", "Receipts", "Customers", "Ageing"] as const;
