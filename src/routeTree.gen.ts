@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppActionRequiredRouteImport } from './routes/_app/action-required'
+import { Route as AppBankingRouteImport } from './routes/_app/banking'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
@@ -35,6 +36,11 @@ const AuthRoute = AuthRouteImport.update({
 const AppActionRequiredRoute = AppActionRequiredRouteImport.update({
   id: '/action-required',
   path: '/action-required',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBankingRoute = AppBankingRouteImport.update({
+  id: '/banking',
+  path: '/banking',
   getParentRoute: () => AppRoute,
 } as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
@@ -62,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/action-required': typeof AppActionRequiredRoute
+  '/banking': typeof AppBankingRoute
   '/overview': typeof AppOverviewRoute
   '/purchases': typeof AppPurchasesRoute
   '/sales': typeof AppSalesRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/action-required': typeof AppActionRequiredRoute
+  '/banking': typeof AppBankingRoute
   '/overview': typeof AppOverviewRoute
   '/purchases': typeof AppPurchasesRoute
   '/sales': typeof AppSalesRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/action-required': typeof AppActionRequiredRoute
+  '/_app/banking': typeof AppBankingRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/purchases': typeof AppPurchasesRoute
   '/_app/sales': typeof AppSalesRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/action-required'
+    | '/banking'
     | '/overview'
     | '/purchases'
     | '/sales'
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/action-required'
+    | '/banking'
     | '/overview'
     | '/purchases'
     | '/sales'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/_app/action-required'
+    | '/_app/banking'
     | '/_app/overview'
     | '/_app/purchases'
     | '/_app/sales'
@@ -154,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActionRequiredRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/banking': {
+      id: '/_app/banking'
+      path: '/banking'
+      fullPath: '/banking'
+      preLoaderRoute: typeof AppBankingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/overview': {
       id: '/_app/overview'
       path: '/overview'
@@ -187,6 +206,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppActionRequiredRoute: typeof AppActionRequiredRoute
+  AppBankingRoute: typeof AppBankingRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppPurchasesRoute: typeof AppPurchasesRoute
   AppSalesRoute: typeof AppSalesRoute
@@ -195,6 +215,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppActionRequiredRoute: AppActionRequiredRoute,
+  AppBankingRoute: AppBankingRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppPurchasesRoute: AppPurchasesRoute,
   AppSalesRoute: AppSalesRoute,
