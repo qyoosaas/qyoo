@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppActionRequiredRouteImport } from './routes/_app/action-required'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
 
@@ -41,6 +42,11 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPurchasesRoute = AppPurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSalesRoute = AppSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/action-required': typeof AppActionRequiredRoute
   '/overview': typeof AppOverviewRoute
+  '/purchases': typeof AppPurchasesRoute
   '/sales': typeof AppSalesRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/action-required': typeof AppActionRequiredRoute
   '/overview': typeof AppOverviewRoute
+  '/purchases': typeof AppPurchasesRoute
   '/sales': typeof AppSalesRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
 }
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_app/action-required': typeof AppActionRequiredRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/_app/purchases': typeof AppPurchasesRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
 }
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/action-required'
     | '/overview'
+    | '/purchases'
     | '/sales'
     | '/invoices/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/action-required'
     | '/overview'
+    | '/purchases'
     | '/sales'
     | '/invoices/$id'
   id:
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_app/action-required'
     | '/_app/overview'
+    | '/_app/purchases'
     | '/_app/sales'
     | '/_app/invoices/$id'
   fileRoutesById: FileRoutesById
@@ -149,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOverviewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/purchases': {
+      id: '/_app/purchases'
+      path: '/purchases'
+      fullPath: '/purchases'
+      preLoaderRoute: typeof AppPurchasesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/sales': {
       id: '/_app/sales'
       path: '/sales'
@@ -169,6 +188,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppActionRequiredRoute: typeof AppActionRequiredRoute
   AppOverviewRoute: typeof AppOverviewRoute
+  AppPurchasesRoute: typeof AppPurchasesRoute
   AppSalesRoute: typeof AppSalesRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
 }
@@ -176,6 +196,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppActionRequiredRoute: AppActionRequiredRoute,
   AppOverviewRoute: AppOverviewRoute,
+  AppPurchasesRoute: AppPurchasesRoute,
   AppSalesRoute: AppSalesRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
 }
