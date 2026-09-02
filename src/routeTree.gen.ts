@@ -12,11 +12,19 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppAccountingRouteImport } from './routes/_app/accounting'
 import { Route as AppActionRequiredRouteImport } from './routes/_app/action-required'
 import { Route as AppBankingRouteImport } from './routes/_app/banking'
+import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
+import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
+import { Route as AppFpaRouteImport } from './routes/_app/fpa'
+import { Route as AppInventoryRouteImport } from './routes/_app/inventory'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
+import { Route as AppProductionRouteImport } from './routes/_app/production'
 import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
+import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -33,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppAccountingRoute = AppAccountingRouteImport.update({
+  id: '/accounting',
+  path: '/accounting',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppActionRequiredRoute = AppActionRequiredRouteImport.update({
   id: '/action-required',
   path: '/action-required',
@@ -43,9 +56,34 @@ const AppBankingRoute = AppBankingRouteImport.update({
   path: '/banking',
   getParentRoute: () => AppRoute,
 } as any)
+const AppDocumentsRoute = AppDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExpensesRoute = AppExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFpaRoute = AppFpaRouteImport.update({
+  id: '/fpa',
+  path: '/fpa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInventoryRoute = AppInventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppOverviewRoute = AppOverviewRouteImport.update({
   id: '/overview',
   path: '/overview',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductionRoute = AppProductionRouteImport.update({
+  id: '/production',
+  path: '/production',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPurchasesRoute = AppPurchasesRouteImport.update({
@@ -53,9 +91,19 @@ const AppPurchasesRoute = AppPurchasesRouteImport.update({
   path: '/purchases',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportsRoute = AppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSalesRoute = AppSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
@@ -67,21 +115,37 @@ const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/accounting': typeof AppAccountingRoute
   '/action-required': typeof AppActionRequiredRoute
   '/banking': typeof AppBankingRoute
+  '/documents': typeof AppDocumentsRoute
+  '/expenses': typeof AppExpensesRoute
+  '/fpa': typeof AppFpaRoute
+  '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
+  '/production': typeof AppProductionRoute
   '/purchases': typeof AppPurchasesRoute
+  '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
+  '/settings': typeof AppSettingsRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/accounting': typeof AppAccountingRoute
   '/action-required': typeof AppActionRequiredRoute
   '/banking': typeof AppBankingRoute
+  '/documents': typeof AppDocumentsRoute
+  '/expenses': typeof AppExpensesRoute
+  '/fpa': typeof AppFpaRoute
+  '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
+  '/production': typeof AppProductionRoute
   '/purchases': typeof AppPurchasesRoute
+  '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
+  '/settings': typeof AppSettingsRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
 }
 export interface FileRoutesById {
@@ -89,11 +153,19 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/accounting': typeof AppAccountingRoute
   '/_app/action-required': typeof AppActionRequiredRoute
   '/_app/banking': typeof AppBankingRoute
+  '/_app/documents': typeof AppDocumentsRoute
+  '/_app/expenses': typeof AppExpensesRoute
+  '/_app/fpa': typeof AppFpaRoute
+  '/_app/inventory': typeof AppInventoryRoute
   '/_app/overview': typeof AppOverviewRoute
+  '/_app/production': typeof AppProductionRoute
   '/_app/purchases': typeof AppPurchasesRoute
+  '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
 }
 export interface FileRouteTypes {
@@ -101,32 +173,56 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/accounting'
     | '/action-required'
     | '/banking'
+    | '/documents'
+    | '/expenses'
+    | '/fpa'
+    | '/inventory'
     | '/overview'
+    | '/production'
     | '/purchases'
+    | '/reports'
     | '/sales'
+    | '/settings'
     | '/invoices/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/accounting'
     | '/action-required'
     | '/banking'
+    | '/documents'
+    | '/expenses'
+    | '/fpa'
+    | '/inventory'
     | '/overview'
+    | '/production'
     | '/purchases'
+    | '/reports'
     | '/sales'
+    | '/settings'
     | '/invoices/$id'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/auth'
+    | '/_app/accounting'
     | '/_app/action-required'
     | '/_app/banking'
+    | '/_app/documents'
+    | '/_app/expenses'
+    | '/_app/fpa'
+    | '/_app/inventory'
     | '/_app/overview'
+    | '/_app/production'
     | '/_app/purchases'
+    | '/_app/reports'
     | '/_app/sales'
+    | '/_app/settings'
     | '/_app/invoices/$id'
   fileRoutesById: FileRoutesById
 }
@@ -159,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/accounting': {
+      id: '/_app/accounting'
+      path: '/accounting'
+      fullPath: '/accounting'
+      preLoaderRoute: typeof AppAccountingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/action-required': {
       id: '/_app/action-required'
       path: '/action-required'
@@ -173,11 +276,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBankingRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/documents': {
+      id: '/_app/documents'
+      path: '/documents'
+      fullPath: '/documents'
+      preLoaderRoute: typeof AppDocumentsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/expenses': {
+      id: '/_app/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof AppExpensesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/fpa': {
+      id: '/_app/fpa'
+      path: '/fpa'
+      fullPath: '/fpa'
+      preLoaderRoute: typeof AppFpaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/inventory': {
+      id: '/_app/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof AppInventoryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/overview': {
       id: '/_app/overview'
       path: '/overview'
       fullPath: '/overview'
       preLoaderRoute: typeof AppOverviewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/production': {
+      id: '/_app/production'
+      path: '/production'
+      fullPath: '/production'
+      preLoaderRoute: typeof AppProductionRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/purchases': {
@@ -187,11 +325,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPurchasesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/reports': {
+      id: '/_app/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AppReportsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/sales': {
       id: '/_app/sales'
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof AppSalesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/invoices/$id': {
@@ -205,20 +357,36 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppAccountingRoute: typeof AppAccountingRoute
   AppActionRequiredRoute: typeof AppActionRequiredRoute
   AppBankingRoute: typeof AppBankingRoute
+  AppDocumentsRoute: typeof AppDocumentsRoute
+  AppExpensesRoute: typeof AppExpensesRoute
+  AppFpaRoute: typeof AppFpaRoute
+  AppInventoryRoute: typeof AppInventoryRoute
   AppOverviewRoute: typeof AppOverviewRoute
+  AppProductionRoute: typeof AppProductionRoute
   AppPurchasesRoute: typeof AppPurchasesRoute
+  AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAccountingRoute: AppAccountingRoute,
   AppActionRequiredRoute: AppActionRequiredRoute,
   AppBankingRoute: AppBankingRoute,
+  AppDocumentsRoute: AppDocumentsRoute,
+  AppExpensesRoute: AppExpensesRoute,
+  AppFpaRoute: AppFpaRoute,
+  AppInventoryRoute: AppInventoryRoute,
   AppOverviewRoute: AppOverviewRoute,
+  AppProductionRoute: AppProductionRoute,
   AppPurchasesRoute: AppPurchasesRoute,
+  AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
 }
 
