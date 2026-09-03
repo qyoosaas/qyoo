@@ -2396,6 +2396,55 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_expense: {
+        Args: {
+          p_bank_account?: string
+          p_category?: string
+          p_company: string
+          p_date: string
+          p_employee?: string
+          p_gross: number
+          p_has_document?: boolean
+          p_merchant: string
+          p_method?: string
+          p_project?: string
+        }
+        Returns: string
+      }
+      create_invoice: {
+        Args: {
+          p_company: string
+          p_customer: string
+          p_due_date: string
+          p_invoice_date: string
+          p_items: Json
+          p_notes?: string
+          p_post?: boolean
+        }
+        Returns: string
+      }
+      create_purchase_order: {
+        Args: {
+          p_company: string
+          p_expected: string
+          p_items: Json
+          p_order_date: string
+          p_supplier: string
+        }
+        Returns: string
+      }
+      create_supplier_bill: {
+        Args: {
+          p_bill_date: string
+          p_company: string
+          p_due_date: string
+          p_items: Json
+          p_purchase_order?: string
+          p_supplier: string
+          p_supplier_ref?: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2403,7 +2452,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      move_inventory: {
+        Args: {
+          p_company: string
+          p_date: string
+          p_kind: string
+          p_product: string
+          p_qty: number
+          p_ref_id: string
+          p_ref_type: string
+          p_unit_cost: number
+        }
+        Returns: undefined
+      }
+      next_doc_number: {
+        Args: { p_company: string; p_kind: string }
+        Returns: string
+      }
       post_customer_payment: { Args: { p_payment: string }; Returns: string }
+      post_draft_invoice: { Args: { p_invoice: string }; Returns: string }
       post_expense: { Args: { p_expense: string }; Returns: string }
       post_invoice: { Args: { p_invoice: string }; Returns: string }
       post_journal: {
@@ -2421,9 +2488,53 @@ export type Database = {
       }
       post_supplier_bill: { Args: { p_bill: string }; Returns: string }
       post_supplier_payment: { Args: { p_payment: string }; Returns: string }
+      record_customer_payment: {
+        Args: {
+          p_amount: number
+          p_bank_account?: string
+          p_date: string
+          p_invoice: string
+          p_method?: string
+          p_reference?: string
+        }
+        Returns: string
+      }
+      record_supplier_payment: {
+        Args: {
+          p_amount: number
+          p_bank_account?: string
+          p_bill: string
+          p_date: string
+          p_method?: string
+          p_reference?: string
+        }
+        Returns: string
+      }
+      report_period: {
+        Args: { p_company: string; p_from: string; p_to: string }
+        Returns: {
+          code: string
+          credit: number
+          debit: number
+          movement: number
+          name: string
+          opening: number
+          subtype: string
+          type: Database["public"]["Enums"]["account_type"]
+        }[]
+      }
       resolve_exception: {
         Args: { p_action: string; p_actor?: string; p_exception: string }
         Returns: Json
+      }
+      run_automation: { Args: { p_company: string }; Returns: Json }
+      set_period_closed: {
+        Args: { p_closed: boolean; p_period: string }
+        Returns: undefined
+      }
+      void_document: {
+        Args: { p_id: string; p_reason?: string; p_type: string }
+        Returns: undefined
       }
     }
     Enums: {
