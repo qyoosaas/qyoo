@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const NAV = [
-  { to: "/overview", label: "Overview", icon: LayoutGrid },
+  { to: "/overview", label: "Overview", icon: LayoutGrid, badge: false },
   { to: "/action-required", label: "Action Required", icon: TriangleAlert, badge: true },
   { to: "/sales", label: "Sales", icon: Receipt },
   { to: "/purchases", label: "Purchases", icon: ShoppingCart },
@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     navigate({ to: "/auth" });
   };
 
-  const userName = email ? email.split("@")[0] : "Ahmed Rahman";
+  const userName = (email ? email.split("@")[0] : undefined) ?? "Ahmed Rahman";
 
   return (
     <div className="flex min-h-screen bg-background">

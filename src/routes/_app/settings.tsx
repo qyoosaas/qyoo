@@ -45,10 +45,14 @@ function Settings() {
     try {
       value = JSON.parse(raw);
     } catch {
-      return toast.error("Value must be valid JSON");
+      toast.error("Value must be valid JSON");
+      return;
     }
     const { error } = await supabase.from("settings").update({ value }).eq("id", s.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await qc.invalidateQueries({ queryKey: ["settings"] });
     toast.success(`${s.label} updated`);
     setDrafts((d) => {
