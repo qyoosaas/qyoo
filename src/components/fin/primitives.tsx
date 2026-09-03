@@ -196,7 +196,7 @@ export function Td({
 }: {
   children: ReactNode;
   right?: boolean;
-  className?: string;
+  className?: string | undefined;
 }) {
   return (
     <td

@@ -79,7 +79,10 @@ function Banking() {
         reconciled: true,
       })
       .eq("id", txn.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     await qc.invalidateQueries();
     toast.success(`Matched to ${label}`);
     setExpanded(null);

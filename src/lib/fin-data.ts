@@ -8,7 +8,7 @@ async function fetchTable<T = Record<string, unknown>>(
   table: string,
   build?: (q: any) => any,
 ): Promise<T[]> {
-  let q = (supabase.from(table) as any).select("*").eq("company_id", COMPANY_ID);
+  let q = (supabase as any).from(table).select("*").eq("company_id", COMPANY_ID);
   if (build) q = build(q);
   const { data, error } = await q;
   if (error) throw new Error(error.message);
