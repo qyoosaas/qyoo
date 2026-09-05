@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
+import { actions, useAction } from "@/lib/fin-actions";
 import { money, shortDate, daysBetween, titleCase } from "@/lib/format";
 import {
   PageHeader,
@@ -15,7 +17,9 @@ import {
   statusTone,
   AutomationNote,
 } from "@/components/fin/primitives";
+import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/sales")({
@@ -36,13 +40,40 @@ export const Route = createFileRoute("/_app/sales")({
 
 const TABS = ["Invoices", "Orders", "Receipts", "Customers", "Ageing"] as const;
 
+const CUSTOMER_FIELDS: EntityField[] = [
+  { key: "name", label: "Name", span: 2, required: true },
+  { key: "code", label: "Code" },
+  { key: "trn", label: "TRN" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
+  { key: "payment_terms_days", label: "Payment terms (days)", type: "number" },
+  { key: "credit_limit", label: "Credit limit (AED)", type: "number" },
+  { key: "address", label: "Address", span: 2 },
+  {
+    key: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "on_hold", label: "On hold" },
+      { value: "inactive", label: "Inactive" },
+    ],
+  },
+];
+
 function Sales() {
-  const invoices = useTable<any>("invoices", ["s"], (q: any) => q.order("invoice_date", { ascending: false }));
+  const invoices = useTable<any>("invoices", ["s"], (q: any) => q.order("invoice_date", { ascending: false }).order("number", { ascending: false }));
   const orders = useTable<any>("sales_orders", ["s"], (q: any) => q.order("order_date", { ascending: false }));
   const payments = useTable<any>("customer_payments", ["s"], (q: any) => q.order("payment_date", { ascending: false }));
   const customers = useTable<any>("customers", ["s"], (q: any) => q.order("name"));
   const [tab, setTab] = useState<(typeof TABS)[number]>("Invoices");
   const [term, setTerm] = useState("");
+  const [newInvoice, setNewInvoice] = useState(false);
+  const [payDoc, setPayDoc] = useState<any | null>(null);
+  const [custRow, setCustRow] = useState<any | null>(null);
+  const { askVoid, dialog: voidDialog } = useVoid();
+  const { askDelete, dialog: delDialog } = useDeleteRow("customers", "Customer");
+  const postDraft = useAction((id: string) => actions.postDraftInvoice(id), { success: "Invoice posted" });
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -50,14 +81,10 @@ function Sales() {
     return m;
   }, [customers.data]);
 
-  const revenue = (invoices.data ?? []).reduce(
-    (s: number, i: any) => s + Number(i.subtotal) - Number(i.discount),
-    0,
-  );
-  const ar = (invoices.data ?? []).reduce((s: number, i: any) => s + Number(i.balance), 0);
-  const overdue = (invoices.data ?? []).filter(
-    (i: any) => Number(i.balance) > 0 && daysBetween(i.due_date) > 0,
-  );
+  const live = (invoices.data ?? []).filter((i: any) => i.status !== "cancelled");
+  const revenue = live.reduce((s: number, i: any) => s + Number(i.subtotal) - Number(i.discount), 0);
+  const ar = live.reduce((s: number, i: any) => s + Number(i.balance), 0);
+  const overdue = live.filter((i: any) => Number(i.balance) > 0 && daysBetween(i.due_date, new Date()) > 0);
   const dso = revenue ? Math.round((ar / revenue) * 231) : 0;
 
   const ageing = useMemo(() => {
@@ -68,15 +95,15 @@ function Sales() {
       { label: "61–90 days", min: 61, max: 90, total: 0 },
       { label: "90+ days", min: 91, max: 99999, total: 0 },
     ];
-    (invoices.data ?? [])
+    live
       .filter((i: any) => Number(i.balance) > 0)
       .forEach((i: any) => {
-        const d = daysBetween(i.due_date);
+        const d = daysBetween(i.due_date, new Date());
         const b = buckets.find((x) => d >= x.min && d <= x.max);
         if (b) b.total += Number(i.balance);
       });
     return buckets;
-  }, [invoices.data]);
+  }, [live]);
 
   const filter = (s: string) => s.toLowerCase().includes(term.toLowerCase());
 
@@ -85,12 +112,21 @@ function Sales() {
       <PageHeader
         title="Sales"
         subtitle="Order to cash — invoices raise, post and reconcile without intervention"
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={() => setCustRow({ status: "active", payment_terms_days: 30, credit_limit: 0 })}>
+              New customer
+            </Button>
+            <Button size="sm" onClick={() => setNewInvoice(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" /> New invoice
+            </Button>
+          </>
+        }
       />
 
       <AutomationNote>
-        {(invoices.data ?? []).length} invoices raised this year;{" "}
-        {(payments.data ?? []).length} receipts matched to them automatically.{" "}
-        {overdue.length} invoices are past due and already reflected in the exception queue.
+        {live.length} invoices raised this year; {(payments.data ?? []).length} receipts matched to them
+        automatically. {overdue.length} invoices are past due and reflected in the exception queue.
       </AutomationNote>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -113,12 +149,7 @@ function Sales() {
             {t}
           </button>
         ))}
-        <Input
-          value={term}
-          onChange={(e) => setTerm(e.target.value)}
-          placeholder="Filter…"
-          className="ml-auto h-8 w-[220px] text-[13px]"
-        />
+        <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Filter…" className="ml-auto h-8 w-[220px] text-[13px]" />
       </div>
 
       {invoices.isLoading ? (
@@ -135,22 +166,19 @@ function Sales() {
                 <Th right>Total</Th>
                 <Th right>Balance</Th>
                 <Th>Status</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
               {(invoices.data ?? [])
                 .filter((i: any) => filter(i.number) || filter(nameById.get(i.customer_id) ?? ""))
-                .slice(0, 120)
+                .slice(0, 150)
                 .map((i: any) => {
-                  const late = Number(i.balance) > 0 && daysBetween(i.due_date) > 0;
+                  const late = Number(i.balance) > 0 && i.status !== "cancelled" && daysBetween(i.due_date, new Date()) > 0;
                   return (
                     <tr key={i.id} className="row-hover hover:bg-secondary/40">
                       <Td>
-                        <Link
-                          to="/invoices/$id"
-                          params={{ id: i.id }}
-                          className="num font-medium underline-offset-4 hover:underline"
-                        >
+                        <Link to="/invoices/$id" params={{ id: i.id }} className="num font-medium underline-offset-4 hover:underline">
                           {i.number}
                         </Link>
                       </Td>
@@ -159,15 +187,26 @@ function Sales() {
                       <Td>
                         <span className={late ? "text-critical" : undefined}>
                           {shortDate(i.due_date)}
-                          {late ? ` · ${daysBetween(i.due_date)}d` : ""}
+                          {late ? ` · ${daysBetween(i.due_date, new Date())}d` : ""}
                         </span>
                       </Td>
                       <Td right>{money(i.total)}</Td>
                       <Td right>{money(i.balance)}</Td>
                       <Td>
-                        <Pill tone={statusTone(late ? "overdue" : i.status)}>
-                          {titleCase(late ? "overdue" : i.status)}
-                        </Pill>
+                        <Pill tone={statusTone(late ? "overdue" : i.status)}>{titleCase(late ? "overdue" : i.status)}</Pill>
+                      </Td>
+                      <Td right>
+                        <div className="flex justify-end gap-0.5">
+                          {i.status === "draft" ? <RowAction onClick={() => postDraft.mutate(i.id)}>Post</RowAction> : null}
+                          {Number(i.balance) > 0 && i.status !== "draft" && i.status !== "cancelled" ? (
+                            <RowAction onClick={() => setPayDoc(i)}>Receive</RowAction>
+                          ) : null}
+                          {i.status !== "cancelled" ? (
+                            <RowAction tone="danger" onClick={() => askVoid({ type: "invoice", id: i.id, label: i.number })}>
+                              Void
+                            </RowAction>
+                          ) : null}
+                        </div>
                       </Td>
                     </tr>
                   );
@@ -254,15 +293,14 @@ function Sales() {
                 <Th>Terms</Th>
                 <Th right>Credit limit</Th>
                 <Th right>Open balance</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
               {(customers.data ?? [])
                 .filter((c: any) => filter(c.name))
                 .map((c: any) => {
-                  const bal = (invoices.data ?? [])
-                    .filter((i: any) => i.customer_id === c.id)
-                    .reduce((s: number, i: any) => s + Number(i.balance), 0);
+                  const bal = live.filter((i: any) => i.customer_id === c.id).reduce((s: number, i: any) => s + Number(i.balance), 0);
                   return (
                     <tr key={c.id} className="row-hover hover:bg-secondary/40">
                       <Td>{c.name}</Td>
@@ -275,9 +313,15 @@ function Sales() {
                       <Td>{c.payment_terms_days} days</Td>
                       <Td right>{money(c.credit_limit)}</Td>
                       <Td right>
-                        <span className={bal > Number(c.credit_limit) ? "text-critical" : undefined}>
-                          {money(bal)}
-                        </span>
+                        <span className={bal > Number(c.credit_limit) ? "text-critical" : undefined}>{money(bal)}</span>
+                      </Td>
+                      <Td right>
+                        <div className="flex justify-end gap-0.5">
+                          <RowAction onClick={() => setCustRow(c)}>Edit</RowAction>
+                          <RowAction tone="danger" onClick={() => askDelete(c)}>
+                            Delete
+                          </RowAction>
+                        </div>
                       </Td>
                     </tr>
                   );
@@ -293,10 +337,7 @@ function Sales() {
                 <div className="label-xs">{b.label}</div>
                 <div className="num mt-2 text-[18px] font-medium">{money(b.total)}</div>
                 <div className="mt-2 h-1 w-full bg-secondary">
-                  <div
-                    className="h-1 bg-foreground"
-                    style={{ width: `${Math.min(100, (b.total / (ar || 1)) * 100)}%` }}
-                  />
+                  <div className="h-1 bg-foreground" style={{ width: `${Math.min(100, (b.total / (ar || 1)) * 100)}%` }} />
                 </div>
               </div>
             ))}
@@ -304,6 +345,12 @@ function Sales() {
           {ar === 0 ? <EmptyState title="No open receivables" /> : null}
         </Panel>
       )}
+
+      <DocumentDialog kind="invoice" open={newInvoice} onOpenChange={setNewInvoice} />
+      <PaymentDialog kind="invoice" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
+      <EntityDialog table="customers" title="Customer" fields={CUSTOMER_FIELDS} row={custRow} onOpenChange={(v) => !v && setCustRow(null)} />
+      {voidDialog}
+      {delDialog}
     </>
   );
 }
