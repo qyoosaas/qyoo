@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
 import { money, shortDate, titleCase } from "@/lib/format";
 import {
@@ -14,7 +15,9 @@ import {
   statusTone,
   AutomationNote,
 } from "@/components/fin/primitives";
+import { ExpenseDialog, RowAction, useVoid } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/expenses")({
   head: () => ({
@@ -33,9 +36,11 @@ export const Route = createFileRoute("/_app/expenses")({
 });
 
 function Expenses() {
-  const expenses = useTable<any>("expenses", ["e"], (q: any) => q.order("expense_date", { ascending: false }));
+  const expenses = useTable<any>("expenses", ["e"], (q: any) => q.order("expense_date", { ascending: false }).order("number", { ascending: false }));
   const categories = useTable<any>("expense_categories", ["e"]);
   const [term, setTerm] = useState("");
+  const [adding, setAdding] = useState(false);
+  const { askVoid, dialog: voidDialog } = useVoid();
 
   const catById = useMemo(() => {
     const m = new Map<string, string>();
@@ -43,8 +48,8 @@ function Expenses() {
     return m;
   }, [categories.data]);
 
-  const all = expenses.data ?? [];
-  const total = all.reduce((s: number, e: any) => s + Number(e.amount), 0);
+  const all = (expenses.data ?? []).filter((e: any) => e.status !== "cancelled");
+  const total = all.reduce((s: number, e: any) => s + Number(e.amount) + Number(e.vat), 0);
   const vat = all.reduce((s: number, e: any) => s + Number(e.vat), 0);
   const missingDocs = all.filter((e: any) => !e.has_document && Number(e.amount) > 100);
   const byCat = useMemo(() => {
@@ -56,15 +61,24 @@ function Expenses() {
     return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
   }, [all, catById]);
 
-  const rows = all.filter(
+  const rows = (expenses.data ?? []).filter(
     (e: any) =>
       e.merchant.toLowerCase().includes(term.toLowerCase()) ||
-      (e.employee ?? "").toLowerCase().includes(term.toLowerCase()),
+      (e.employee ?? "").toLowerCase().includes(term.toLowerCase()) ||
+      e.number.toLowerCase().includes(term.toLowerCase()),
   );
 
   return (
     <>
-      <PageHeader title="Expenses" subtitle="Cards, cash and reimbursements — categorised and VAT-split on capture" />
+      <PageHeader
+        title="Expenses"
+        subtitle="Cards, cash and reimbursements — categorised and VAT-split on capture"
+        actions={
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus className="mr-1.5 h-3.5 w-3.5" /> Record expense
+          </Button>
+        }
+      />
 
       <AutomationNote>
         {all.length} expenses captured this year. FIN assigned the category, split recoverable VAT and
@@ -99,12 +113,7 @@ function Expenses() {
         <Panel
           title="All expenses"
           actions={
-            <Input
-              value={term}
-              onChange={(e) => setTerm(e.target.value)}
-              placeholder="Merchant or employee…"
-              className="h-8 w-[220px] text-[13px]"
-            />
+            <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Merchant, employee or number…" className="h-8 w-[220px] text-[13px]" />
           }
         >
           {expenses.isLoading ? (
@@ -114,19 +123,24 @@ function Expenses() {
               <thead>
                 <tr>
                   <Th>Date</Th>
+                  <Th>Number</Th>
                   <Th>Merchant</Th>
                   <Th>Category</Th>
                   <Th>Employee</Th>
-                  <Th right>Amount</Th>
+                  <Th right>Net</Th>
                   <Th right>VAT</Th>
                   <Th>Receipt</Th>
                   <Th>Status</Th>
+                  <Th right>Actions</Th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((e: any) => (
                   <tr key={e.id} className="row-hover hover:bg-secondary/40">
                     <Td>{shortDate(e.expense_date)}</Td>
+                    <Td>
+                      <span className="num text-muted-foreground">{e.number}</span>
+                    </Td>
                     <Td>{e.merchant}</Td>
                     <Td>{catById.get(e.category_id) ?? "—"}</Td>
                     <Td>{e.employee ?? "—"}</Td>
@@ -144,6 +158,13 @@ function Expenses() {
                     <Td>
                       <Pill tone={statusTone(e.status)}>{titleCase(e.status)}</Pill>
                     </Td>
+                    <Td right>
+                      {e.status !== "cancelled" ? (
+                        <RowAction tone="danger" onClick={() => askVoid({ type: "expense", id: e.id, label: e.number })}>
+                          Void
+                        </RowAction>
+                      ) : null}
+                    </Td>
                   </tr>
                 ))}
               </tbody>
@@ -151,6 +172,9 @@ function Expenses() {
           )}
         </Panel>
       </div>
+
+      <ExpenseDialog open={adding} onOpenChange={setAdding} />
+      {voidDialog}
     </>
   );
 }
