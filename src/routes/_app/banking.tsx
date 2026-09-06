@@ -18,6 +18,7 @@ import {
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RunAutomationButton } from "@/components/fin/automation-button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,7 @@ function Banking() {
       <PageHeader
         title="Banking"
         subtitle="Live feeds from Emirates NBD, Mashreq and FAB — matched as transactions land"
+        actions={<RunAutomationButton variant="default" />}
       />
 
       <AutomationNote>

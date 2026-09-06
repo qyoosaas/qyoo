@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/fin-data";
+import { actions, useAction } from "@/lib/fin-actions";
+import { RowAction } from "@/components/fin/forms";
 import { money, shortDate, titleCase } from "@/lib/format";
 import {
   PageHeader,
@@ -42,6 +44,9 @@ function Accounting() {
   );
   const accounts = useTable<any>("accounts", ["a"], (q: any) => q.order("code"));
   const periods = useTable<any>("accounting_periods", ["a"], (q: any) => q.order("starts_on"));
+  const togglePeriod = useAction(({ id, closed }: { id: string; closed: boolean }) => actions.setPeriodClosed(id, closed), {
+    success: "Period updated",
+  });
   const lines = useQuery({
     queryKey: ["jel", "all"],
     queryFn: async () => {
@@ -259,6 +264,7 @@ function Accounting() {
                 <Th>From</Th>
                 <Th>To</Th>
                 <Th>Status</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
@@ -269,6 +275,11 @@ function Accounting() {
                   <Td>{shortDate(p.ends_on)}</Td>
                   <Td>
                     <Pill tone={p.is_closed ? "success" : "warning"}>{p.is_closed ? "Closed" : "Open"}</Pill>
+                  </Td>
+                  <Td right>
+                    <RowAction onClick={() => togglePeriod.mutate({ id: p.id, closed: !p.is_closed })}>
+                      {p.is_closed ? "Reopen" : "Close period"}
+                    </RowAction>
                   </Td>
                 </tr>
               ))}
