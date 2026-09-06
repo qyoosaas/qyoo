@@ -15,6 +15,9 @@ import {
   AutomationNote,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/purchases")({
@@ -35,6 +38,26 @@ export const Route = createFileRoute("/_app/purchases")({
 
 const TABS = ["Bills", "Orders", "Goods receipts", "Payments", "Suppliers"] as const;
 
+const SUPPLIER_FIELDS: EntityField[] = [
+  { key: "name", label: "Name", span: 2, required: true },
+  { key: "code", label: "Code" },
+  { key: "trn", label: "TRN" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
+  { key: "payment_terms_days", label: "Payment terms (days)", type: "number" },
+  { key: "address", label: "Address", span: 2 },
+  {
+    key: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "on_hold", label: "On hold" },
+      { value: "inactive", label: "Inactive" },
+    ],
+  },
+];
+
 function Purchases() {
   const bills = useTable<any>("supplier_bills", ["p"], (q: any) => q.order("bill_date", { ascending: false }));
   const orders = useTable<any>("purchase_orders", ["p"], (q: any) => q.order("order_date", { ascending: false }));
@@ -43,6 +66,11 @@ function Purchases() {
   const suppliers = useTable<any>("suppliers", ["p"], (q: any) => q.order("name"));
   const [tab, setTab] = useState<(typeof TABS)[number]>("Bills");
   const [term, setTerm] = useState("");
+  const [newDoc, setNewDoc] = useState<"bill" | "po" | null>(null);
+  const [payDoc, setPayDoc] = useState<any | null>(null);
+  const [supRow, setSupRow] = useState<any | null>(null);
+  const { askVoid, dialog: voidDialog } = useVoid();
+  const { askDelete, dialog: delDialog } = useDeleteRow("suppliers", "Supplier");
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -61,6 +89,19 @@ function Purchases() {
       <PageHeader
         title="Purchases"
         subtitle="Procure to pay — PO, goods receipt and supplier invoice matched line by line"
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={() => setSupRow({ status: "active", payment_terms_days: 30 })}>
+              New supplier
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setNewDoc("po")}>
+              New PO
+            </Button>
+            <Button size="sm" onClick={() => setNewDoc("bill")}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" /> New bill
+            </Button>
+          </>
+        }
       />
 
       <AutomationNote>
@@ -112,6 +153,7 @@ function Purchases() {
                 <Th right>Total</Th>
                 <Th right>Balance</Th>
                 <Th>Match</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +178,19 @@ function Purchases() {
                     <Td right>{money(b.total)}</Td>
                     <Td right>{money(b.balance)}</Td>
                     <Td>
-                      <Pill tone={statusTone(b.match_status)}>{titleCase(b.match_status)}</Pill>
+                      <Pill tone={statusTone(b.status === "cancelled" ? "cancelled" : b.match_status)}>
+                        {titleCase(b.status === "cancelled" ? "cancelled" : b.match_status)}
+                      </Pill>
+                    </Td>
+                    <Td right>
+                      <div className="flex justify-end gap-0.5">
+                        {Number(b.balance) > 0 && b.status !== "cancelled" ? <RowAction onClick={() => setPayDoc(b)}>Pay</RowAction> : null}
+                        {b.status !== "cancelled" ? (
+                          <RowAction tone="danger" onClick={() => askVoid({ type: "supplier_bill", id: b.id, label: b.number })}>
+                            Void
+                          </RowAction>
+                        ) : null}
+                      </div>
                     </Td>
                   </tr>
                 ))}
@@ -253,6 +307,7 @@ function Purchases() {
                 <Th>TRN</Th>
                 <Th>Terms</Th>
                 <Th right>Open balance</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
@@ -273,6 +328,14 @@ function Purchases() {
                       </Td>
                       <Td>{s.payment_terms_days} days</Td>
                       <Td right>{money(bal)}</Td>
+                      <Td right>
+                        <div className="flex justify-end gap-0.5">
+                          <RowAction onClick={() => setSupRow(s)}>Edit</RowAction>
+                          <RowAction tone="danger" onClick={() => askDelete(s)}>
+                            Delete
+                          </RowAction>
+                        </div>
+                      </Td>
                     </tr>
                   );
                 })}
@@ -280,6 +343,13 @@ function Purchases() {
           </TableShell>
         </Panel>
       )}
+
+      <DocumentDialog kind="bill" open={newDoc === "bill"} onOpenChange={(v) => !v && setNewDoc(null)} />
+      <DocumentDialog kind="po" open={newDoc === "po"} onOpenChange={(v) => !v && setNewDoc(null)} />
+      <PaymentDialog kind="bill" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
+      <EntityDialog table="suppliers" title="Supplier" fields={SUPPLIER_FIELDS} row={supRow} onOpenChange={(v) => !v && setSupRow(null)} />
+      {voidDialog}
+      {delDialog}
     </>
   );
 }
