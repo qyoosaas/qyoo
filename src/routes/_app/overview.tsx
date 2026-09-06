@@ -15,6 +15,7 @@ import { useTable, useExceptions } from "@/lib/fin-data";
 import { money, moneyShort, shortDate, relative, daysBetween, TODAY, titleCase } from "@/lib/format";
 import { Metric, Panel, Pill, PageHeader, Loading, AutomationNote, Confidence } from "@/components/fin/primitives";
 import { ArrowRight } from "lucide-react";
+import { RunAutomationButton } from "@/components/fin/automation-button";
 
 export const Route = createFileRoute("/_app/overview")({
   head: () => ({
@@ -97,6 +98,8 @@ function Overview() {
         title="Overview"
         subtitle={`Al Noor Manufacturing LLC · position as at ${shortDate(TODAY)}`}
         actions={
+          <>
+          <RunAutomationButton />
           <Link
             to="/action-required"
             className="inline-flex items-center gap-1.5 rounded-sm bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground hover:bg-primary/90"
