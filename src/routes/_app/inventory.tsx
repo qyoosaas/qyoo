@@ -116,6 +116,7 @@ function Inventory() {
                 <Th right>Avg cost</Th>
                 <Th right>Value</Th>
                 <Th>Reorder</Th>
+                <Th right>Actions</Th>
               </tr>
             </thead>
             <tbody>
