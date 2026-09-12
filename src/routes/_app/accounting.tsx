@@ -141,9 +141,8 @@ function Accounting() {
               {all
                 .filter((e: any) => (e.memo ?? "").toLowerCase().includes(term.toLowerCase()) || e.number.includes(term))
                 .map((e: any) => (
-                  <>
+                  <Fragment key={e.id}>
                     <tr
-                      key={e.id}
                       onClick={() => setOpen(open === e.id ? null : e.id)}
                       className="row-hover cursor-pointer hover:bg-secondary/40"
                     >
