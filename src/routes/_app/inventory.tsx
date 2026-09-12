@@ -150,6 +150,14 @@ function Inventory() {
                         <Pill tone="muted">OK</Pill>
                       )}
                     </Td>
+                    <Td right>
+                      <div className="flex justify-end gap-0.5">
+                        <RowAction onClick={() => setProdRow(r)}>Edit</RowAction>
+                        <RowAction tone="danger" onClick={() => askDelete(r)}>
+                          Delete
+                        </RowAction>
+                      </div>
+                    </Td>
                   </tr>
                 ))}
             </tbody>
