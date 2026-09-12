@@ -128,7 +128,7 @@ function Reports() {
         const idx = days <= 0 ? 0 : days <= 30 ? 1 : days <= 60 ? 2 : days <= 90 ? 3 : 4;
         const key = names.get(d[partyKey]) ?? "—";
         const arr = m.get(key) ?? [0, 0, 0, 0, 0];
-        arr[idx] += Number(d.balance);
+        arr[idx] = (arr[idx] ?? 0) + Number(d.balance);
         m.set(key, arr);
       });
     return { buckets: b, rows: Array.from(m.entries()).sort((a, c) => c[1].reduce((s, x) => s + x, 0) - a[1].reduce((s, x) => s + x, 0)) };
