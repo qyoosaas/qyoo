@@ -1037,6 +1037,64 @@ export type Database = {
           },
         ]
       }
+      goods_receipt_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          goods_receipt_id: string
+          id: string
+          product_id: string | null
+          purchase_order_item_id: string | null
+          quantity: number
+          unit_cost: number
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          goods_receipt_id: string
+          id?: string
+          product_id?: string | null
+          purchase_order_item_id?: string | null
+          quantity?: number
+          unit_cost?: number
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          goods_receipt_id?: string
+          id?: string
+          product_id?: string | null
+          purchase_order_item_id?: string | null
+          quantity?: number
+          unit_cost?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goods_receipt_items_goods_receipt_id_fkey"
+            columns: ["goods_receipt_id"]
+            isOneToOne: false
+            referencedRelation: "goods_receipts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goods_receipt_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goods_receipt_items_purchase_order_item_id_fkey"
+            columns: ["purchase_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goods_receipts: {
         Row: {
           company_id: string
@@ -2396,6 +2454,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      automation_selftest: { Args: never; Returns: Json }
       create_expense: {
         Args: {
           p_bank_account?: string
@@ -2433,18 +2492,32 @@ export type Database = {
         }
         Returns: string
       }
-      create_supplier_bill: {
-        Args: {
-          p_bill_date: string
-          p_company: string
-          p_due_date: string
-          p_items: Json
-          p_purchase_order?: string
-          p_supplier: string
-          p_supplier_ref?: string
-        }
-        Returns: string
-      }
+      create_supplier_bill:
+        | {
+            Args: {
+              p_bill_date: string
+              p_company: string
+              p_due_date: string
+              p_items: Json
+              p_purchase_order?: string
+              p_supplier: string
+              p_supplier_ref?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_bill_date: string
+              p_company: string
+              p_due_date: string
+              p_goods_receipt?: string
+              p_items: Json
+              p_purchase_order?: string
+              p_supplier: string
+              p_supplier_ref?: string
+            }
+            Returns: string
+          }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2469,6 +2542,38 @@ export type Database = {
         Args: { p_company: string; p_kind: string }
         Returns: string
       }
+      po_match_lines: {
+        Args: { p_po: string }
+        Returns: {
+          billed_price: number
+          billed_quantity: number
+          billed_vat: number
+          description: string
+          ordered_price: number
+          ordered_quantity: number
+          ordered_vat: number
+          price_variance: number
+          product_id: string
+          purchase_order_item_id: string
+          quantity_variance: number
+          received_quantity: number
+          value_variance: number
+          vat_variance: number
+        }[]
+      }
+      po_open_lines: {
+        Args: { p_po: string }
+        Returns: {
+          description: string
+          open_quantity: number
+          ordered_quantity: number
+          product_id: string
+          purchase_order_item_id: string
+          received_quantity: number
+          unit_price: number
+          vat_rate: number
+        }[]
+      }
       post_customer_payment: { Args: { p_payment: string }; Returns: string }
       post_draft_invoice: { Args: { p_invoice: string }; Returns: string }
       post_expense: { Args: { p_expense: string }; Returns: string }
@@ -2488,6 +2593,10 @@ export type Database = {
       }
       post_supplier_bill: { Args: { p_bill: string }; Returns: string }
       post_supplier_payment: { Args: { p_payment: string }; Returns: string }
+      receive_goods: {
+        Args: { p_actor?: string; p_date?: string; p_lines: Json; p_po: string }
+        Returns: string
+      }
       record_customer_payment: {
         Args: {
           p_amount: number
