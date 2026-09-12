@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/fin-data";
@@ -141,9 +141,8 @@ function Accounting() {
               {all
                 .filter((e: any) => (e.memo ?? "").toLowerCase().includes(term.toLowerCase()) || e.number.includes(term))
                 .map((e: any) => (
-                  <>
+                  <Fragment key={e.id}>
                     <tr
-                      key={e.id}
                       onClick={() => setOpen(open === e.id ? null : e.id)}
                       className="row-hover cursor-pointer hover:bg-secondary/40"
                     >
@@ -187,7 +186,7 @@ function Accounting() {
                         </td>
                       </tr>
                     ) : null}
-                  </>
+                  </Fragment>
                 ))}
             </tbody>
           </TableShell>

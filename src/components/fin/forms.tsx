@@ -212,7 +212,7 @@ export function LineItemsEditor({
                         product_id: v,
                         description: p ? p.name : l.description,
                         unit_price: p ? Number(p[priceField]) : l.unit_price,
-                        vat_rate: p ? Number(p.vat_rate) : l.vat_rate,
+                        vat_rate: p ? Number(p.vat_rate) : (l.vat_rate ?? 5),
                       });
                     }}
                     className="h-7 text-[12px]"
@@ -448,7 +448,7 @@ export function PaymentDialog({
       onOpenChange={onOpenChange}
       title={kind === "invoice" ? `Record receipt · ${doc?.number ?? ""}` : `Pay bill · ${doc?.number ?? ""}`}
       description={`Open balance ${money(doc?.balance, true)}. A matched bank line and ledger entry are written automatically.`}
-      onSubmit={() => mut.mutate()}
+      onSubmit={() => mut.mutate(undefined as never)}
       submitLabel={kind === "invoice" ? "Record receipt" : "Record payment"}
       busy={mut.isPending}
       extra={
@@ -514,10 +514,10 @@ export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         date: f.date,
         gross,
         category_id: f.category_id || null,
-        employee: f.employee || undefined,
+        employee: f.employee || null,
         method: f.method,
         has_document: f.has_document,
-        project: f.project || undefined,
+        project: f.project || null,
         bank_account_id: f.bank || null,
       });
     },
@@ -530,7 +530,7 @@ export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       onOpenChange={onOpenChange}
       title="Record expense"
       description="Enter the amount paid including VAT. FIN splits the recoverable VAT, posts to the ledger and writes the bank line."
-      onSubmit={() => mut.mutate()}
+      onSubmit={() => mut.mutate(undefined as never)}
       submitLabel="Record & post"
       busy={mut.isPending}
       extra={gross > 0 ? `Net ${money(net)} · VAT ${money(gross - net)}` : null}
@@ -624,16 +624,16 @@ export function EntityDialog({
         const v = f[fld.key];
         payload[fld.key] = fld.type === "number" ? Number(v || 0) : v === "" ? null : v;
       });
-      if (f.id) payload.id = f.id;
+      if (f['id']) payload['id'] = f['id'];
       await upsertRow(table, payload);
     },
-    { success: f.id ? `${title} updated` : `${title} created`, onSuccess: () => onOpenChange(false) },
+    { success: f['id'] ? `${title} updated` : `${title} created`, onSuccess: () => onOpenChange(false) },
   );
   return (
-    <FormDialog open={!!row} onOpenChange={onOpenChange} title={f.id ? `Edit ${title.toLowerCase()}` : `New ${title.toLowerCase()}`} onSubmit={() => mut.mutate()} busy={mut.isPending}>
+    <FormDialog open={!!row} onOpenChange={onOpenChange} title={f['id'] ? `Edit ${title.toLowerCase()}` : `New ${title.toLowerCase()}`} onSubmit={() => mut.mutate(undefined as never)} busy={mut.isPending}>
       <div className="grid gap-3 sm:grid-cols-2">
         {fields.map((fld) => (
-          <Field key={fld.key} label={fld.label} className={fld.span === 2 ? "sm:col-span-2" : undefined}>
+          <Field key={fld.key} label={fld.label} {...(fld.span === 2 ? { className: "sm:col-span-2" } : {})}>
             {fld.type === "select" ? (
               <NativeSelect value={String(f[fld.key] ?? "")} onChange={(v) => setF((s) => ({ ...s, [fld.key]: v }))}>
                 {(fld.options ?? []).map((o) => (

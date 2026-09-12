@@ -68,7 +68,7 @@ export const actions = {
       p_bank_account: p.bank_account_id ?? null,
       p_reference: p.reference ?? null,
     }),
-  createExpense: (p: { merchant: string; date: string; gross: number; category_id?: string | null; employee?: string; method?: string; has_document?: boolean; project?: string; bank_account_id?: string | null }) =>
+  createExpense: (p: { merchant: string; date: string; gross: number; category_id?: string | null; employee?: string | null; method?: string; has_document?: boolean; project?: string | null; bank_account_id?: string | null }) =>
     rpc<string>("create_expense", {
       p_company: COMPANY_ID,
       p_merchant: p.merchant,
@@ -112,7 +112,7 @@ export function useAction<TArgs, TResult>(
 export async function upsertRow(table: string, row: Record<string, unknown>) {
   const payload = { ...row, company_id: COMPANY_ID };
   const q = (supabase as any).from(table);
-  const { error } = row.id ? await q.update(payload).eq("id", row.id) : await q.insert(payload);
+  const { error } = row['id'] ? await q.update(payload).eq("id", row['id']) : await q.insert(payload);
   if (error) throw new Error(error.message);
 }
 
