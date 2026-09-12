@@ -14,7 +14,31 @@ import {
   AutomationNote,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { EntityDialog, RowAction, useDeleteRow, type EntityField } from "@/components/fin/forms";
+import { RunAutomationButton } from "@/components/fin/automation-button";
 import { cn } from "@/lib/utils";
+
+const PRODUCT_FIELDS: EntityField[] = [
+  { key: "sku", label: "SKU", required: true },
+  { key: "name", label: "Name", required: true },
+  {
+    key: "kind",
+    label: "Type",
+    type: "select",
+    options: [
+      { value: "raw_material", label: "Raw material" },
+      { value: "finished_good", label: "Finished good" },
+      { value: "service", label: "Service" },
+    ],
+  },
+  { key: "unit", label: "Unit" },
+  { key: "selling_price", label: "Selling price (AED)", type: "number" },
+  { key: "cost", label: "Standard cost (AED)", type: "number" },
+  { key: "vat_rate", label: "VAT rate %", type: "number" },
+  { key: "reorder_level", label: "Reorder level", type: "number" },
+];
 
 export const Route = createFileRoute("/_app/inventory")({
   head: () => ({
@@ -41,6 +65,8 @@ function Inventory() {
   );
   const [tab, setTab] = useState<"Stock" | "Movements">("Stock");
   const [term, setTerm] = useState("");
+  const [prodRow, setProdRow] = useState<any | null>(null);
+  const { askDelete, dialog: delDialog } = useDeleteRow("products", "Product");
 
   const whById = useMemo(() => {
     const m = new Map<string, string>();
@@ -65,7 +91,18 @@ function Inventory() {
 
   return (
     <>
-      <PageHeader title="Inventory" subtitle="Weighted-average costing across three warehouses" />
+      <PageHeader
+        title="Inventory"
+        subtitle="Weighted-average costing across three warehouses"
+        actions={
+          <>
+            <RunAutomationButton />
+            <Button size="sm" onClick={() => setProdRow({ kind: "raw_material", unit: "unit", vat_rate: 5, selling_price: 0, cost: 0, reorder_level: 0 })}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" /> New product
+            </Button>
+          </>
+        }
+      />
 
       <AutomationNote>
         Every goods receipt, production output and shipment revalued stock automatically. Cost of
