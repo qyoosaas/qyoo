@@ -236,6 +236,9 @@ function Inventory() {
           </TableShell>
         </Panel>
       )}
+
+      <EntityDialog table="products" title="Product" fields={PRODUCT_FIELDS} row={prodRow} onOpenChange={(v) => !v && setProdRow(null)} />
+      {delDialog}
     </>
   );
 }
