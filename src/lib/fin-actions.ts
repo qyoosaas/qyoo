@@ -131,21 +131,32 @@ export const actions = {
     >("report_period", { p_company: COMPANY_ID, p_from: from, p_to: to }),
 };
 
-/** Generic mutation hook: runs an action, invalidates all cached queries, toasts. */
+/**
+ * Generic mutation hook: runs an action, refreshes every cached figure so
+ * dashboards, exception counts and reports stay in sync, then toasts.
+ * Failures show a human message plus a retry; the raw error only hits the console.
+ */
 export function useAction<TArgs, TResult>(
   fn: (args: TArgs) => Promise<TResult>,
-  opts: { success?: string | ((r: TResult) => string); onSuccess?: (r: TResult) => void } = {},
+  opts: { success?: string | ((r: TResult) => string); onSuccess?: (r: TResult) => void; scope?: string } = {},
 ) {
   const qc = useQueryClient();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: fn,
     onSuccess: async (r) => {
       await qc.invalidateQueries();
       if (opts.success) toast.success(typeof opts.success === "function" ? opts.success(r) : opts.success);
       opts.onSuccess?.(r);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error, variables) => {
+      logTechnical(opts.scope ?? "action", e);
+      toast.error(humanError(e), {
+        duration: 8000,
+        action: { label: "Retry", onClick: () => mutation.mutate(variables) },
+      });
+    },
   });
+  return mutation;
 }
 
 /** Direct table writes for master data (customers, suppliers, products). RLS applies. */
