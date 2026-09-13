@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/lib/fin-data";
 import { money, shortDate, titleCase, daysBetween } from "@/lib/format";
@@ -64,6 +64,7 @@ function Purchases() {
   const receipts = useTable<any>("goods_receipts", ["p"], (q: any) => q.order("receipt_date", { ascending: false }));
   const payments = useTable<any>("supplier_payments", ["p"], (q: any) => q.order("payment_date", { ascending: false }));
   const suppliers = useTable<any>("suppliers", ["p"], (q: any) => q.order("name"));
+  const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Bills");
   const [term, setTerm] = useState("");
   const [newDoc, setNewDoc] = useState<"bill" | "po" | null>(null);
@@ -215,9 +216,20 @@ function Purchases() {
                 .filter((o: any) => filter(o.number) || filter(nameById.get(o.supplier_id) ?? ""))
                 .slice(0, 120)
                 .map((o: any) => (
-                  <tr key={o.id} className="row-hover hover:bg-secondary/40">
+                  <tr
+                    key={o.id}
+                    className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/purchases/$id", params: { id: o.id } })}
+                  >
                     <Td>
-                      <span className="num font-medium">{o.number}</span>
+                      <Link
+                        to="/purchases/$id"
+                        params={{ id: o.id }}
+                        className="num font-medium underline-offset-2 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {o.number}
+                      </Link>
                     </Td>
                     <Td>{nameById.get(o.supplier_id) ?? "—"}</Td>
                     <Td>{shortDate(o.order_date)}</Td>
