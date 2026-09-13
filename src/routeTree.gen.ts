@@ -26,7 +26,7 @@ import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
-import { Route as AppPurchasesIdRouteImport } from './routes/_app/purchases.$id'
+import { Route as AppPurchasesIdRouteImport } from './routes/_app/purchases_.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -113,9 +113,9 @@ const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppPurchasesIdRoute = AppPurchasesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AppPurchasesRoute,
+  id: '/purchases_/$id',
+  path: '/purchases/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -130,7 +130,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
-  '/purchases': typeof AppPurchasesRouteWithChildren
+  '/purchases': typeof AppPurchasesRoute
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
@@ -149,7 +149,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
-  '/purchases': typeof AppPurchasesRouteWithChildren
+  '/purchases': typeof AppPurchasesRoute
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
@@ -170,12 +170,12 @@ export interface FileRoutesById {
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/production': typeof AppProductionRoute
-  '/_app/purchases': typeof AppPurchasesRouteWithChildren
+  '/_app/purchases': typeof AppPurchasesRoute
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
-  '/_app/purchases/$id': typeof AppPurchasesIdRoute
+  '/_app/purchases_/$id': typeof AppPurchasesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -235,7 +235,7 @@ export interface FileRouteTypes {
     | '/_app/sales'
     | '/_app/settings'
     | '/_app/invoices/$id'
-    | '/_app/purchases/$id'
+    | '/_app/purchases_/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -365,27 +365,15 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvoicesIdRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/purchases/$id': {
-      id: '/_app/purchases/$id'
-      path: '/$id'
+    '/_app/purchases_/$id': {
+      id: '/_app/purchases_/$id'
+      path: '/purchases/$id'
       fullPath: '/purchases/$id'
       preLoaderRoute: typeof AppPurchasesIdRouteImport
-      parentRoute: typeof AppPurchasesRoute
+      parentRoute: typeof AppRoute
     }
   }
 }
-
-interface AppPurchasesRouteChildren {
-  AppPurchasesIdRoute: typeof AppPurchasesIdRoute
-}
-
-const AppPurchasesRouteChildren: AppPurchasesRouteChildren = {
-  AppPurchasesIdRoute: AppPurchasesIdRoute,
-}
-
-const AppPurchasesRouteWithChildren = AppPurchasesRoute._addFileChildren(
-  AppPurchasesRouteChildren,
-)
 
 interface AppRouteChildren {
   AppAccountingRoute: typeof AppAccountingRoute
@@ -397,11 +385,12 @@ interface AppRouteChildren {
   AppInventoryRoute: typeof AppInventoryRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppProductionRoute: typeof AppProductionRoute
-  AppPurchasesRoute: typeof AppPurchasesRouteWithChildren
+  AppPurchasesRoute: typeof AppPurchasesRoute
   AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
+  AppPurchasesIdRoute: typeof AppPurchasesIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -414,11 +403,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventoryRoute: AppInventoryRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppProductionRoute: AppProductionRoute,
-  AppPurchasesRoute: AppPurchasesRouteWithChildren,
+  AppPurchasesRoute: AppPurchasesRoute,
   AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
+  AppPurchasesIdRoute: AppPurchasesIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
