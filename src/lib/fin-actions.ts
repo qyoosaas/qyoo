@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID } from "./format";
+import { humanError, logTechnical } from "./fin-errors";
 
 /** Thin wrappers over the accounting engine RPCs. Every call is one DB transaction. */
 
