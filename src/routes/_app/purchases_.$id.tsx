@@ -21,7 +21,7 @@ import { FormDialog, Field, ConfirmDialog } from "@/components/fin/forms";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
 import { ArrowLeft, PackageCheck, ReceiptText } from "lucide-react";
 
-export const Route = createFileRoute("/_app/purchases/$id")({
+export const Route = createFileRoute("/_app/purchases_/$id")({
   head: () => ({
     meta: [
       { title: "Purchase order · FIN Autonomous Finance OS" },
