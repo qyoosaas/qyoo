@@ -26,6 +26,7 @@ import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
+import { Route as AppPurchasesIdRouteImport } from './routes/_app/purchases.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -111,6 +112,11 @@ const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
   path: '/invoices/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPurchasesIdRoute = AppPurchasesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AppPurchasesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,11 +130,12 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
-  '/purchases': typeof AppPurchasesRoute
+  '/purchases': typeof AppPurchasesRouteWithChildren
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
+  '/purchases/$id': typeof AppPurchasesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -142,11 +149,12 @@ export interface FileRoutesByTo {
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
-  '/purchases': typeof AppPurchasesRoute
+  '/purchases': typeof AppPurchasesRouteWithChildren
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
+  '/purchases/$id': typeof AppPurchasesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -162,11 +170,12 @@ export interface FileRoutesById {
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/production': typeof AppProductionRoute
-  '/_app/purchases': typeof AppPurchasesRoute
+  '/_app/purchases': typeof AppPurchasesRouteWithChildren
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
+  '/_app/purchases/$id': typeof AppPurchasesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/invoices/$id'
+    | '/purchases/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/sales'
     | '/settings'
     | '/invoices/$id'
+    | '/purchases/$id'
   id:
     | '__root__'
     | '/'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_app/sales'
     | '/_app/settings'
     | '/_app/invoices/$id'
+    | '/_app/purchases/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -353,8 +365,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInvoicesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/purchases/$id': {
+      id: '/_app/purchases/$id'
+      path: '/$id'
+      fullPath: '/purchases/$id'
+      preLoaderRoute: typeof AppPurchasesIdRouteImport
+      parentRoute: typeof AppPurchasesRoute
+    }
   }
 }
+
+interface AppPurchasesRouteChildren {
+  AppPurchasesIdRoute: typeof AppPurchasesIdRoute
+}
+
+const AppPurchasesRouteChildren: AppPurchasesRouteChildren = {
+  AppPurchasesIdRoute: AppPurchasesIdRoute,
+}
+
+const AppPurchasesRouteWithChildren = AppPurchasesRoute._addFileChildren(
+  AppPurchasesRouteChildren,
+)
 
 interface AppRouteChildren {
   AppAccountingRoute: typeof AppAccountingRoute
@@ -366,7 +397,7 @@ interface AppRouteChildren {
   AppInventoryRoute: typeof AppInventoryRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppProductionRoute: typeof AppProductionRoute
-  AppPurchasesRoute: typeof AppPurchasesRoute
+  AppPurchasesRoute: typeof AppPurchasesRouteWithChildren
   AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
   AppSettingsRoute: typeof AppSettingsRoute
@@ -383,7 +414,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventoryRoute: AppInventoryRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppProductionRoute: AppProductionRoute,
-  AppPurchasesRoute: AppPurchasesRoute,
+  AppPurchasesRoute: AppPurchasesRouteWithChildren,
   AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
   AppSettingsRoute: AppSettingsRoute,
