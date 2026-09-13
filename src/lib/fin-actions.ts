@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID } from "./format";
+import { humanError, logTechnical } from "./fin-errors";
 
 /** Thin wrappers over the accounting engine RPCs. Every call is one DB transaction. */
 
@@ -49,7 +50,7 @@ export const actions = {
       p_expected: p.expected_date ?? null,
       p_items: p.items,
     }),
-  createSupplierBill: (p: { supplier_id: string; bill_date: string; due_date?: string | null; items: LineInput[]; supplier_ref?: string; purchase_order_id?: string | null }) =>
+  createSupplierBill: (p: { supplier_id: string; bill_date: string; due_date?: string | null; items: LineInput[]; supplier_ref?: string; purchase_order_id?: string | null; goods_receipt_id?: string | null }) =>
     rpc<string>("create_supplier_bill", {
       p_company: COMPANY_ID,
       p_supplier: p.supplier_id,
@@ -58,7 +59,47 @@ export const actions = {
       p_items: p.items,
       p_supplier_ref: p.supplier_ref ?? null,
       p_purchase_order: p.purchase_order_id ?? null,
+      p_goods_receipt: p.goods_receipt_id ?? null,
     }),
+  receiveGoods: (p: { purchase_order_id: string; date: string; lines: { purchase_order_item_id: string; quantity: number }[] }) =>
+    rpc<string>("receive_goods", {
+      p_po: p.purchase_order_id,
+      p_lines: p.lines,
+      p_date: p.date,
+      p_actor: "Ahmed Rahman",
+    }),
+  poOpenLines: (po: string) =>
+    rpc<
+      {
+        purchase_order_item_id: string;
+        product_id: string | null;
+        description: string;
+        ordered_quantity: number;
+        unit_price: number;
+        vat_rate: number;
+        received_quantity: number;
+        open_quantity: number;
+      }[]
+    >("po_open_lines", { p_po: po }),
+  poMatchLines: (po: string) =>
+    rpc<
+      {
+        purchase_order_item_id: string;
+        product_id: string | null;
+        description: string;
+        ordered_quantity: number;
+        ordered_price: number;
+        ordered_vat: number;
+        received_quantity: number;
+        billed_quantity: number;
+        billed_price: number;
+        billed_vat: number;
+        quantity_variance: number;
+        price_variance: number;
+        vat_variance: number;
+        value_variance: number;
+      }[]
+    >("po_match_lines", { p_po: po }),
   recordSupplierPayment: (p: { bill_id: string; amount: number; date: string; method?: string; bank_account_id?: string | null; reference?: string }) =>
     rpc<string>("record_supplier_payment", {
       p_bill: p.bill_id,
@@ -91,21 +132,32 @@ export const actions = {
     >("report_period", { p_company: COMPANY_ID, p_from: from, p_to: to }),
 };
 
-/** Generic mutation hook: runs an action, invalidates all cached queries, toasts. */
+/**
+ * Generic mutation hook: runs an action, refreshes every cached figure so
+ * dashboards, exception counts and reports stay in sync, then toasts.
+ * Failures show a human message plus a retry; the raw error only hits the console.
+ */
 export function useAction<TArgs, TResult>(
   fn: (args: TArgs) => Promise<TResult>,
-  opts: { success?: string | ((r: TResult) => string); onSuccess?: (r: TResult) => void } = {},
+  opts: { success?: string | ((r: TResult) => string); onSuccess?: (r: TResult) => void; scope?: string } = {},
 ) {
   const qc = useQueryClient();
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: fn,
     onSuccess: async (r) => {
       await qc.invalidateQueries();
       if (opts.success) toast.success(typeof opts.success === "function" ? opts.success(r) : opts.success);
       opts.onSuccess?.(r);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error, variables) => {
+      logTechnical(opts.scope ?? "action", e);
+      toast.error(humanError(e), {
+        duration: 8000,
+        action: { label: "Retry", onClick: () => mutation.mutate(variables) },
+      });
+    },
   });
+  return mutation;
 }
 
 /** Direct table writes for master data (customers, suppliers, products). RLS applies. */
