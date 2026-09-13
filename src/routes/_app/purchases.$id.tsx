@@ -129,7 +129,7 @@ function PurchaseOrderDetail() {
         supplier_id: p.supplier_id,
         bill_date: billDate,
         items: p.items,
-        supplier_ref: supplierRef || undefined,
+        ...(supplierRef ? { supplier_ref: supplierRef } : {}),
         purchase_order_id: id,
         goods_receipt_id: (receipts.data ?? []).at(-1)?.id ?? null,
       }),
