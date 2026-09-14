@@ -688,6 +688,122 @@ export type Database = {
           },
         ]
       }
+      delivery_note_items: {
+        Row: {
+          created_at: string
+          delivery_note_id: string
+          description: string | null
+          id: string
+          product_id: string | null
+          quantity: number
+          sales_order_item_id: string | null
+          unit_cost: number
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          delivery_note_id: string
+          description?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          sales_order_item_id?: string | null
+          unit_cost?: number
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          delivery_note_id?: string
+          description?: string | null
+          id?: string
+          product_id?: string | null
+          quantity?: number
+          sales_order_item_id?: string | null
+          unit_cost?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_note_items_delivery_note_id_fkey"
+            columns: ["delivery_note_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_note_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_note_items_sales_order_item_id_fkey"
+            columns: ["sales_order_item_id"]
+            isOneToOne: false
+            referencedRelation: "sales_order_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_notes: {
+        Row: {
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          delivery_date: string
+          id: string
+          number: string
+          sales_order_id: string | null
+          status: string
+          total_value: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          delivery_date?: string
+          id?: string
+          number: string
+          sales_order_id?: string | null
+          status?: string
+          total_value?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          delivery_date?: string
+          id?: string
+          number?: string
+          sales_order_id?: string | null
+          status?: string
+          total_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notes_sales_order_id_fkey"
+            columns: ["sales_order_id"]
+            isOneToOne: false
+            referencedRelation: "sales_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_links: {
         Row: {
           document_id: string
@@ -2482,6 +2598,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_invoice_from_order: {
+        Args: {
+          p_due_date: string
+          p_invoice_date: string
+          p_items: Json
+          p_notes?: string
+          p_so: string
+        }
+        Returns: string
+      }
       create_purchase_order: {
         Args: {
           p_company: string
@@ -2489,6 +2615,16 @@ export type Database = {
           p_items: Json
           p_order_date: string
           p_supplier: string
+        }
+        Returns: string
+      }
+      create_sales_order: {
+        Args: {
+          p_company: string
+          p_customer: string
+          p_expected: string
+          p_items: Json
+          p_order_date: string
         }
         Returns: string
       }
@@ -2518,6 +2654,10 @@ export type Database = {
             }
             Returns: string
           }
+      deliver_goods: {
+        Args: { p_actor?: string; p_date?: string; p_lines: Json; p_so: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2640,6 +2780,36 @@ export type Database = {
       set_period_closed: {
         Args: { p_closed: boolean; p_period: string }
         Returns: undefined
+      }
+      so_match_lines: {
+        Args: { p_so: string }
+        Returns: {
+          delivered_quantity: number
+          description: string
+          invoiced_price: number
+          invoiced_quantity: number
+          ordered_price: number
+          ordered_quantity: number
+          price_variance: number
+          product_id: string
+          quantity_variance: number
+          sales_order_item_id: string
+          value_variance: number
+        }[]
+      }
+      so_open_lines: {
+        Args: { p_so: string }
+        Returns: {
+          delivered_quantity: number
+          description: string
+          discount: number
+          open_quantity: number
+          ordered_quantity: number
+          product_id: string
+          sales_order_item_id: string
+          unit_price: number
+          vat_rate: number
+        }[]
       }
       void_document: {
         Args: { p_id: string; p_reason?: string; p_type: string }
