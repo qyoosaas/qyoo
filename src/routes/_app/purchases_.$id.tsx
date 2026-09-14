@@ -161,13 +161,22 @@ function PurchaseOrderDetail() {
       </Panel>
     );
 
-  const billItems = (open.data ?? []).map((l) => ({
-    product_id: l.product_id,
-    description: l.description,
-    quantity: Number(l.received_quantity) > 0 ? Number(l.received_quantity) : Number(l.ordered_quantity),
-    unit_price: Number(l.unit_price),
-    vat_rate: Number(l.vat_rate),
-  }));
+  // Bill only what has been received and not yet billed; with nothing received
+  // yet, fall back to the still-open ordered quantity.
+  const billItems = (open.data ?? [])
+    .map((l) => {
+      const m = (match.data ?? []).find((x) => x.purchase_order_item_id === l.purchase_order_item_id);
+      const unbilled = m ? Number(m.received_quantity) - Number(m.billed_quantity) : 0;
+      const quantity = unbilled > 0.0001 ? unbilled : Number(l.open_quantity);
+      return {
+        product_id: l.product_id,
+        description: l.description,
+        quantity,
+        unit_price: Number(l.unit_price),
+        vat_rate: Number(l.vat_rate),
+      };
+    })
+    .filter((l) => l.quantity > 0.0001);
 
   return (
     <>
