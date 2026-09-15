@@ -287,12 +287,12 @@ export function DocumentDialog({
   onOpenChange,
   onCreated,
 }: {
-  kind: "invoice" | "bill" | "po";
+  kind: "invoice" | "bill" | "po" | "so";
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onCreated?: (id: string) => void;
 }) {
-  const isSales = kind === "invoice";
+  const isSales = kind === "invoice" || kind === "so";
   const parties = useTable<any>(isSales ? "customers" : "suppliers", ["form"], (q: any) => q.order("name"));
   const pos = useTable<any>("purchase_orders", ["form"], (q: any) => q.in("status", ["confirmed", "draft"]).order("order_date", { ascending: false }));
   const [party, setParty] = useState("");
@@ -315,11 +315,17 @@ export function DocumentDialog({
     }
   }, [open]);
 
-  const titles = { invoice: "New sales invoice", bill: "New supplier bill", po: "New purchase order" };
+  const titles = {
+    invoice: "New sales invoice",
+    bill: "New supplier bill",
+    po: "New purchase order",
+    so: "New sales order",
+  };
   const descs = {
     invoice: "Posted immediately: receivable, revenue, VAT, COGS and stock update in one step.",
     bill: "Posted immediately: payable, VAT input and raw-material stock. Linking a PO runs the three-way match.",
     po: "Creates a confirmed order. Bills raised against it are matched automatically.",
+    so: "Creates a confirmed order. Deliver goods against it to raise a delivery note, then invoice what has been delivered.",
   };
 
   const mut = useAction(
@@ -327,17 +333,20 @@ export function DocumentDialog({
       if (!party) throw new Error(isSales ? "Choose a customer" : "Choose a supplier");
       const items = lines.filter((l) => l.quantity > 0).map(({ key: _k, ...l }) => ({ ...l, product_id: l.product_id || null }));
       if (kind === "invoice") return actions.createInvoice({ customer_id: party, invoice_date: date, due_date: due || null, items, notes, post });
+      if (kind === "so") return actions.createSalesOrder({ customer_id: party, order_date: date, expected_date: due || null, items });
       if (kind === "bill") return actions.createSupplierBill({ supplier_id: party, bill_date: date, due_date: due || null, items, supplier_ref: ref, purchase_order_id: po || null });
       return actions.createPurchaseOrder({ supplier_id: party, order_date: date, expected_date: due || null, items });
     },
     {
-      success: `${titles[kind].replace("New ", "")} created and posted`,
+      scope: `create_${kind}`,
+      success: `${titles[kind].replace("New ", "")} created`,
       onSuccess: (id) => {
         onOpenChange(false);
         onCreated?.(id);
       },
     },
   );
+
 
   return (
     <FormDialog
