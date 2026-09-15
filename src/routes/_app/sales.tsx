@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_app/sales")({
   component: Sales,
 });
 
-const TABS = ["Invoices", "Orders", "Receipts", "Customers", "Ageing"] as const;
+const TABS = ["Invoices", "Orders", "Delivery notes", "Receipts", "Customers", "Ageing"] as const;
 
 const CUSTOMER_FIELDS: EntityField[] = [
   { key: "name", label: "Name", span: 2, required: true },
