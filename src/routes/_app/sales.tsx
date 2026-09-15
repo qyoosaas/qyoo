@@ -248,7 +248,45 @@ function Sales() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Delivery notes" ? (
+        <Panel>
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Delivery note</Th>
+                <Th>Customer</Th>
+                <Th>Delivered</Th>
+                <Th right>Cost value</Th>
+                <Th>Status</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {(deliveries.data ?? [])
+                .filter((d: any) => filter(d.number) || filter(nameById.get(d.customer_id) ?? ""))
+                .slice(0, 120)
+                .map((d: any) => (
+                  <tr key={d.id} className="row-hover hover:bg-secondary/40">
+                    <Td>
+                      <span className="num font-medium">{d.number}</span>
+                    </Td>
+                    <Td>{nameById.get(d.customer_id) ?? "—"}</Td>
+                    <Td>{shortDate(d.delivery_date)}</Td>
+                    <Td right>{money(d.total_value)}</Td>
+                    <Td>
+                      <Pill tone={statusTone(d.status)}>{titleCase(d.status)}</Pill>
+                    </Td>
+                  </tr>
+                ))}
+              {!(deliveries.data ?? []).length ? (
+                <tr>
+                  <Td className="text-muted-foreground">No delivery notes yet — deliver goods from a sales order.</Td>
+                </tr>
+              ) : null}
+            </tbody>
+          </TableShell>
+        </Panel>
       ) : tab === "Receipts" ? (
+
         <Panel>
           <TableShell>
             <thead>
