@@ -64,12 +64,16 @@ const CUSTOMER_FIELDS: EntityField[] = [
 function Sales() {
   const invoices = useTable<any>("invoices", ["s"], (q: any) => q.order("invoice_date", { ascending: false }).order("number", { ascending: false }));
   const orders = useTable<any>("sales_orders", ["s"], (q: any) => q.order("order_date", { ascending: false }));
+  const deliveries = useTable<any>("delivery_notes", ["s"], (q: any) => q.order("delivery_date", { ascending: false }));
   const payments = useTable<any>("customer_payments", ["s"], (q: any) => q.order("payment_date", { ascending: false }));
   const customers = useTable<any>("customers", ["s"], (q: any) => q.order("name"));
+  const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Invoices");
   const [term, setTerm] = useState("");
   const [newInvoice, setNewInvoice] = useState(false);
+  const [newOrder, setNewOrder] = useState(false);
   const [payDoc, setPayDoc] = useState<any | null>(null);
+
   const [custRow, setCustRow] = useState<any | null>(null);
   const { askVoid, dialog: voidDialog } = useVoid();
   const { askDelete, dialog: delDialog } = useDeleteRow("customers", "Customer");
