@@ -309,7 +309,55 @@ function Purchases() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Ageing" ? (
+        <Panel title="Payables ageing" description="Open supplier balances by days past due">
+          <div className="grid gap-px bg-border sm:grid-cols-5">
+            {ageing.map((b) => (
+              <div key={b.label} className="bg-card px-4 py-5">
+                <div className="label-xs">{b.label}</div>
+                <div className="num mt-2 text-[18px] font-medium">{money(b.total)}</div>
+                <div className="mt-2 h-1 w-full bg-secondary">
+                  <div className="h-1 bg-foreground" style={{ width: `${Math.min(100, (b.total / (ap || 1)) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Supplier</Th>
+                <Th right>Current</Th>
+                <Th right>1–30 days</Th>
+                <Th right>31–60 days</Th>
+                <Th right>61–90 days</Th>
+                <Th right>90+ days</Th>
+                <Th right>Total</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {bySupplier.map((r) => (
+                <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                  <Td>{r.name}</Td>
+                  {r.buckets.map((v, i) => (
+                    <Td key={i} right>
+                      {money(v)}
+                    </Td>
+                  ))}
+                  <Td right>
+                    <span className="font-medium">{money(r.total)}</span>
+                  </Td>
+                </tr>
+              ))}
+              {!bySupplier.length ? (
+                <tr>
+                  <Td className="text-muted-foreground">No open payables.</Td>
+                </tr>
+              ) : null}
+            </tbody>
+          </TableShell>
+        </Panel>
       ) : (
+
         <Panel>
           <TableShell>
             <thead>
