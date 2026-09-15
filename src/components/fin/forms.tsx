@@ -377,12 +377,13 @@ export function DocumentDialog({
             ))}
           </NativeSelect>
         </Field>
-        <Field label={kind === "po" ? "Order date" : "Date"}>
+        <Field label={kind === "po" || kind === "so" ? "Order date" : "Date"}>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-8 text-[13px]" />
         </Field>
-        <Field label={kind === "po" ? "Expected" : "Due (blank = terms)"}>
+        <Field label={kind === "po" || kind === "so" ? "Expected" : "Due (blank = terms)"}>
           <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="h-8 text-[13px]" />
         </Field>
+
         {kind === "bill" ? (
           <>
             <Field label="Supplier reference" className="sm:col-span-2">
