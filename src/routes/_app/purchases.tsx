@@ -85,6 +85,41 @@ function Purchases() {
   const matchRate = (bills.data ?? []).length ? (matched / (bills.data ?? []).length) * 100 : 0;
   const filter = (s: string) => s.toLowerCase().includes(term.toLowerCase());
 
+  const BUCKETS = [
+    { label: "Current", min: -99999, max: 0 },
+    { label: "1–30 days", min: 1, max: 30 },
+    { label: "31–60 days", min: 31, max: 60 },
+    { label: "61–90 days", min: 61, max: 90 },
+    { label: "90+ days", min: 91, max: 99999 },
+  ];
+
+  const openBills = (bills.data ?? []).filter((b: any) => b.status !== "cancelled" && Number(b.balance) > 0);
+
+  const ageing = useMemo(() => {
+    const rows = BUCKETS.map((b) => ({ label: b.label, total: 0 }));
+    openBills.forEach((b: any) => {
+      const d = daysBetween(b.due_date, new Date());
+      const i = BUCKETS.findIndex((x) => d >= x.min && d <= x.max);
+      if (i >= 0) rows[i]!.total += Number(b.balance);
+    });
+    return rows;
+  }, [bills.data]);
+
+  const bySupplier = useMemo(() => {
+    const m = new Map<string, { id: string; name: string; buckets: number[]; total: number }>();
+    openBills.forEach((b: any) => {
+      const key = b.supplier_id as string;
+      if (!m.has(key)) m.set(key, { id: key, name: nameById.get(key) ?? "—", buckets: [0, 0, 0, 0, 0], total: 0 });
+      const row = m.get(key)!;
+      const d = daysBetween(b.due_date, new Date());
+      const i = BUCKETS.findIndex((x) => d >= x.min && d <= x.max);
+      if (i >= 0) row.buckets[i]! += Number(b.balance);
+      row.total += Number(b.balance);
+    });
+    return [...m.values()].sort((a, b) => b.total - a.total);
+  }, [bills.data, nameById]);
+
+
   return (
     <>
       <PageHeader
