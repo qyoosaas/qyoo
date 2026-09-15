@@ -117,9 +117,13 @@ function Sales() {
             <Button size="sm" variant="outline" onClick={() => setCustRow({ status: "active", payment_terms_days: 30, credit_limit: 0 })}>
               New customer
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setNewOrder(true)}>
+              New sales order
+            </Button>
             <Button size="sm" onClick={() => setNewInvoice(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" /> New invoice
             </Button>
+
           </>
         }
       />
