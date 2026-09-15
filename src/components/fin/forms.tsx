@@ -355,7 +355,7 @@ export function DocumentDialog({
       title={titles[kind]}
       description={descs[kind]}
       onSubmit={() => mut.mutate(true)}
-      submitLabel={kind === "po" ? "Create order" : "Create & post"}
+      submitLabel={kind === "po" || kind === "so" ? "Create order" : "Create & post"}
       busy={mut.isPending}
       wide
       extra={
