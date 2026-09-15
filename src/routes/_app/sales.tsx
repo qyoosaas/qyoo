@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_app/sales")({
   component: Sales,
 });
 
-const TABS = ["Invoices", "Orders", "Receipts", "Customers", "Ageing"] as const;
+const TABS = ["Invoices", "Orders", "Delivery notes", "Receipts", "Customers", "Ageing"] as const;
 
 const CUSTOMER_FIELDS: EntityField[] = [
   { key: "name", label: "Name", span: 2, required: true },
@@ -64,12 +64,16 @@ const CUSTOMER_FIELDS: EntityField[] = [
 function Sales() {
   const invoices = useTable<any>("invoices", ["s"], (q: any) => q.order("invoice_date", { ascending: false }).order("number", { ascending: false }));
   const orders = useTable<any>("sales_orders", ["s"], (q: any) => q.order("order_date", { ascending: false }));
+  const deliveries = useTable<any>("delivery_notes", ["s"], (q: any) => q.order("delivery_date", { ascending: false }));
   const payments = useTable<any>("customer_payments", ["s"], (q: any) => q.order("payment_date", { ascending: false }));
   const customers = useTable<any>("customers", ["s"], (q: any) => q.order("name"));
+  const navigate = useNavigate();
   const [tab, setTab] = useState<(typeof TABS)[number]>("Invoices");
   const [term, setTerm] = useState("");
   const [newInvoice, setNewInvoice] = useState(false);
+  const [newOrder, setNewOrder] = useState(false);
   const [payDoc, setPayDoc] = useState<any | null>(null);
+
   const [custRow, setCustRow] = useState<any | null>(null);
   const { askVoid, dialog: voidDialog } = useVoid();
   const { askDelete, dialog: delDialog } = useDeleteRow("customers", "Customer");
@@ -117,9 +121,13 @@ function Sales() {
             <Button size="sm" variant="outline" onClick={() => setCustRow({ status: "active", payment_terms_days: 30, credit_limit: 0 })}>
               New customer
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setNewOrder(true)}>
+              New sales order
+            </Button>
             <Button size="sm" onClick={() => setNewInvoice(true)}>
               <Plus className="mr-1.5 h-3.5 w-3.5" /> New invoice
             </Button>
+
           </>
         }
       />
@@ -232,10 +240,22 @@ function Sales() {
                 .filter((o: any) => filter(o.number) || filter(nameById.get(o.customer_id) ?? ""))
                 .slice(0, 120)
                 .map((o: any) => (
-                  <tr key={o.id} className="row-hover hover:bg-secondary/40">
+                  <tr
+                    key={o.id}
+                    className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/sales/$id", params: { id: o.id } })}
+                  >
                     <Td>
-                      <span className="num font-medium">{o.number}</span>
+                      <Link
+                        to="/sales/$id"
+                        params={{ id: o.id }}
+                        className="num font-medium underline-offset-2 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {o.number}
+                      </Link>
                     </Td>
+
                     <Td>{nameById.get(o.customer_id) ?? "—"}</Td>
                     <Td>{shortDate(o.order_date)}</Td>
                     <Td>{shortDate(o.expected_delivery)}</Td>
@@ -248,7 +268,45 @@ function Sales() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Delivery notes" ? (
+        <Panel>
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Delivery note</Th>
+                <Th>Customer</Th>
+                <Th>Delivered</Th>
+                <Th right>Cost value</Th>
+                <Th>Status</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {(deliveries.data ?? [])
+                .filter((d: any) => filter(d.number) || filter(nameById.get(d.customer_id) ?? ""))
+                .slice(0, 120)
+                .map((d: any) => (
+                  <tr key={d.id} className="row-hover hover:bg-secondary/40">
+                    <Td>
+                      <span className="num font-medium">{d.number}</span>
+                    </Td>
+                    <Td>{nameById.get(d.customer_id) ?? "—"}</Td>
+                    <Td>{shortDate(d.delivery_date)}</Td>
+                    <Td right>{money(d.total_value)}</Td>
+                    <Td>
+                      <Pill tone={statusTone(d.status)}>{titleCase(d.status)}</Pill>
+                    </Td>
+                  </tr>
+                ))}
+              {!(deliveries.data ?? []).length ? (
+                <tr>
+                  <Td className="text-muted-foreground">No delivery notes yet — deliver goods from a sales order.</Td>
+                </tr>
+              ) : null}
+            </tbody>
+          </TableShell>
+        </Panel>
       ) : tab === "Receipts" ? (
+
         <Panel>
           <TableShell>
             <thead>
@@ -347,6 +405,13 @@ function Sales() {
       )}
 
       <DocumentDialog kind="invoice" open={newInvoice} onOpenChange={setNewInvoice} />
+      <DocumentDialog
+        kind="so"
+        open={newOrder}
+        onOpenChange={setNewOrder}
+        onCreated={(id) => navigate({ to: "/sales/$id", params: { id } })}
+      />
+
       <PaymentDialog kind="invoice" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
       <EntityDialog table="customers" title="Customer" fields={CUSTOMER_FIELDS} row={custRow} onOpenChange={(v) => !v && setCustRow(null)} />
       {voidDialog}

@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_app/purchases")({
   component: Purchases,
 });
 
-const TABS = ["Bills", "Orders", "Goods receipts", "Payments", "Suppliers"] as const;
+const TABS = ["Bills", "Orders", "Goods receipts", "Payments", "Suppliers", "Ageing"] as const;
 
 const SUPPLIER_FIELDS: EntityField[] = [
   { key: "name", label: "Name", span: 2, required: true },
@@ -84,6 +84,41 @@ function Purchases() {
   const matched = (bills.data ?? []).filter((b: any) => b.match_status === "matched").length;
   const matchRate = (bills.data ?? []).length ? (matched / (bills.data ?? []).length) * 100 : 0;
   const filter = (s: string) => s.toLowerCase().includes(term.toLowerCase());
+
+  const BUCKETS = [
+    { label: "Current", min: -99999, max: 0 },
+    { label: "1–30 days", min: 1, max: 30 },
+    { label: "31–60 days", min: 31, max: 60 },
+    { label: "61–90 days", min: 61, max: 90 },
+    { label: "90+ days", min: 91, max: 99999 },
+  ];
+
+  const openBills = (bills.data ?? []).filter((b: any) => b.status !== "cancelled" && Number(b.balance) > 0);
+
+  const ageing = useMemo(() => {
+    const rows = BUCKETS.map((b) => ({ label: b.label, total: 0 }));
+    openBills.forEach((b: any) => {
+      const d = daysBetween(b.due_date, new Date());
+      const i = BUCKETS.findIndex((x) => d >= x.min && d <= x.max);
+      if (i >= 0) rows[i]!.total += Number(b.balance);
+    });
+    return rows;
+  }, [bills.data]);
+
+  const bySupplier = useMemo(() => {
+    const m = new Map<string, { id: string; name: string; buckets: number[]; total: number }>();
+    openBills.forEach((b: any) => {
+      const key = b.supplier_id as string;
+      if (!m.has(key)) m.set(key, { id: key, name: nameById.get(key) ?? "—", buckets: [0, 0, 0, 0, 0], total: 0 });
+      const row = m.get(key)!;
+      const d = daysBetween(b.due_date, new Date());
+      const i = BUCKETS.findIndex((x) => d >= x.min && d <= x.max);
+      if (i >= 0) row.buckets[i]! += Number(b.balance);
+      row.total += Number(b.balance);
+    });
+    return [...m.values()].sort((a, b) => b.total - a.total);
+  }, [bills.data, nameById]);
+
 
   return (
     <>
@@ -309,7 +344,55 @@ function Purchases() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Ageing" ? (
+        <Panel title="Payables ageing" description="Open supplier balances by days past due">
+          <div className="grid gap-px bg-border sm:grid-cols-5">
+            {ageing.map((b) => (
+              <div key={b.label} className="bg-card px-4 py-5">
+                <div className="label-xs">{b.label}</div>
+                <div className="num mt-2 text-[18px] font-medium">{money(b.total)}</div>
+                <div className="mt-2 h-1 w-full bg-secondary">
+                  <div className="h-1 bg-foreground" style={{ width: `${Math.min(100, (b.total / (ap || 1)) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Supplier</Th>
+                <Th right>Current</Th>
+                <Th right>1–30 days</Th>
+                <Th right>31–60 days</Th>
+                <Th right>61–90 days</Th>
+                <Th right>90+ days</Th>
+                <Th right>Total</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {bySupplier.map((r) => (
+                <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                  <Td>{r.name}</Td>
+                  {r.buckets.map((v, i) => (
+                    <Td key={i} right>
+                      {money(v)}
+                    </Td>
+                  ))}
+                  <Td right>
+                    <span className="font-medium">{money(r.total)}</span>
+                  </Td>
+                </tr>
+              ))}
+              {!bySupplier.length ? (
+                <tr>
+                  <Td className="text-muted-foreground">No open payables.</Td>
+                </tr>
+              ) : null}
+            </tbody>
+          </TableShell>
+        </Panel>
       ) : (
+
         <Panel>
           <TableShell>
             <thead>

@@ -42,7 +42,61 @@ export const actions = {
       p_bank_account: p.bank_account_id ?? null,
       p_reference: p.reference ?? null,
     }),
+  createSalesOrder: (p: { customer_id: string; order_date: string; expected_date?: string | null; items: LineInput[] }) =>
+    rpc<string>("create_sales_order", {
+      p_company: COMPANY_ID,
+      p_customer: p.customer_id,
+      p_order_date: p.order_date,
+      p_expected: p.expected_date ?? null,
+      p_items: p.items,
+    }),
+  deliverGoods: (p: { sales_order_id: string; date: string; lines: { sales_order_item_id: string; quantity: number }[] }) =>
+    rpc<string>("deliver_goods", {
+      p_so: p.sales_order_id,
+      p_lines: p.lines,
+      p_date: p.date,
+      p_actor: "Ahmed Rahman",
+    }),
+  createInvoiceFromOrder: (p: { sales_order_id: string; invoice_date: string; due_date?: string | null; items: LineInput[]; notes?: string }) =>
+    rpc<string>("create_invoice_from_order", {
+      p_so: p.sales_order_id,
+      p_invoice_date: p.invoice_date,
+      p_due_date: p.due_date ?? null,
+      p_items: p.items,
+      p_notes: p.notes ?? null,
+    }),
+  soOpenLines: (so: string) =>
+    rpc<
+      {
+        sales_order_item_id: string;
+        product_id: string | null;
+        description: string;
+        ordered_quantity: number;
+        unit_price: number;
+        discount: number;
+        vat_rate: number;
+        delivered_quantity: number;
+        open_quantity: number;
+      }[]
+    >("so_open_lines", { p_so: so }),
+  soMatchLines: (so: string) =>
+    rpc<
+      {
+        sales_order_item_id: string;
+        product_id: string | null;
+        description: string;
+        ordered_quantity: number;
+        ordered_price: number;
+        delivered_quantity: number;
+        invoiced_quantity: number;
+        invoiced_price: number;
+        quantity_variance: number;
+        price_variance: number;
+        value_variance: number;
+      }[]
+    >("so_match_lines", { p_so: so }),
   createPurchaseOrder: (p: { supplier_id: string; order_date: string; expected_date?: string | null; items: LineInput[] }) =>
+
     rpc<string>("create_purchase_order", {
       p_company: COMPANY_ID,
       p_supplier: p.supplier_id,
