@@ -405,6 +405,13 @@ function Sales() {
       )}
 
       <DocumentDialog kind="invoice" open={newInvoice} onOpenChange={setNewInvoice} />
+      <DocumentDialog
+        kind="so"
+        open={newOrder}
+        onOpenChange={setNewOrder}
+        onCreated={(id) => navigate({ to: "/sales/$id", params: { id } })}
+      />
+
       <PaymentDialog kind="invoice" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
       <EntityDialog table="customers" title="Customer" fields={CUSTOMER_FIELDS} row={custRow} onOpenChange={(v) => !v && setCustRow(null)} />
       {voidDialog}
