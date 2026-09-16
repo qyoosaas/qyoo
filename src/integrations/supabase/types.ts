@@ -2570,6 +2570,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      allocate_bank_transaction: {
+        Args: {
+          p_account_code?: string
+          p_actor?: string
+          p_kind: string
+          p_target?: string
+          p_txn: string
+        }
+        Returns: Json
+      }
       automation_selftest: { Args: never; Returns: Json }
       create_expense: {
         Args: {
@@ -2665,6 +2675,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_bank_transactions: {
+        Args: {
+          p_bank_account: string
+          p_batch?: string
+          p_company: string
+          p_rows: Json
+        }
+        Returns: Json
+      }
       move_inventory: {
         Args: {
           p_company: string
@@ -2735,6 +2754,15 @@ export type Database = {
       post_supplier_payment: { Args: { p_payment: string }; Returns: string }
       receive_goods: {
         Args: { p_actor?: string; p_date?: string; p_lines: Json; p_po: string }
+        Returns: string
+      }
+      reconcile_bank_account: {
+        Args: {
+          p_actor?: string
+          p_bank_account: string
+          p_period_label: string
+          p_statement_balance: number
+        }
         Returns: string
       }
       record_customer_payment: {
@@ -2810,6 +2838,20 @@ export type Database = {
           unit_price: number
           vat_rate: number
         }[]
+      }
+      unmatch_bank_transaction: {
+        Args: { p_actor?: string; p_txn: string }
+        Returns: undefined
+      }
+      update_document: {
+        Args: {
+          p_actor?: string
+          p_id: string
+          p_items?: Json
+          p_patch?: Json
+          p_type: string
+        }
+        Returns: undefined
       }
       void_document: {
         Args: { p_id: string; p_reason?: string; p_type: string }
