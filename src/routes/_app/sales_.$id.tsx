@@ -188,7 +188,12 @@ function SalesOrderDetail() {
                 <Truck className="mr-1.5 h-3.5 w-3.5" /> Deliver goods
               </Button>
             ) : null}
-            {so.data.status !== "cancelled" ? (
+            {editable ? (
+              <Button size="sm" variant="ghost" onClick={() => setEditOpen(true)} title="Edit this order">
+                <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+              </Button>
+            ) : null}
+            {so.data.status !== "cancelled" && invoiceItems.length > 0 ? (
               <Button size="sm" onClick={() => setInvoiceOpen(true)}>
                 <ReceiptText className="mr-1.5 h-3.5 w-3.5" /> Create invoice
               </Button>
@@ -196,6 +201,8 @@ function SalesOrderDetail() {
           </>
         }
       />
+      <EditDocDialog type="sales_order" row={editOpen ? so.data : null} onOpenChange={(v) => !v && setEditOpen(false)} />
+
 
       <AutomationNote>
         {editable
