@@ -717,3 +717,217 @@ export function RowAction({ onClick, children, tone }: { onClick: () => void; ch
     </button>
   );
 }
+
+/* ---------- subtle document edit ---------- */
+
+type EditCfg = {
+  label: string;
+  fields: { key: string; label: string; type: "date" | "text" | "select"; options?: { value: string; label: string }[] }[];
+  itemsTable?: string;
+  itemsFk?: string;
+  priceField?: "selling_price" | "cost";
+  showDiscount?: boolean;
+  note: string;
+};
+
+const EDIT_CFG: Record<string, EditCfg> = {
+  purchase_order: {
+    label: "purchase order",
+    fields: [
+      { key: "order_date", label: "Order date", type: "date" },
+      { key: "expected_date", label: "Expected", type: "date" },
+    ],
+    itemsTable: "purchase_order_items",
+    itemsFk: "purchase_order_id",
+    priceField: "cost",
+    note: "Only possible while nothing has been received or billed against this order.",
+  },
+  sales_order: {
+    label: "sales order",
+    fields: [
+      { key: "order_date", label: "Order date", type: "date" },
+      { key: "expected_delivery", label: "Expected delivery", type: "date" },
+    ],
+    itemsTable: "sales_order_items",
+    itemsFk: "sales_order_id",
+    priceField: "selling_price",
+    showDiscount: true,
+    note: "Only possible while nothing has been delivered or invoiced against this order.",
+  },
+  invoice: {
+    label: "invoice",
+    fields: [
+      { key: "invoice_date", label: "Invoice date", type: "date" },
+      { key: "due_date", label: "Due date", type: "date" },
+      { key: "notes", label: "Notes", type: "text" },
+    ],
+    itemsTable: "invoice_items",
+    itemsFk: "invoice_id",
+    priceField: "selling_price",
+    showDiscount: true,
+    note: "Draft invoices can be changed in full. Once posted, only the notes can be corrected.",
+  },
+  supplier_bill: {
+    label: "supplier bill",
+    fields: [
+      { key: "supplier_ref", label: "Supplier reference", type: "text" },
+      { key: "due_date", label: "Due date", type: "date" },
+    ],
+    note: "Posted bills keep their figures. Correct the reference here, or void and re-enter.",
+  },
+  goods_receipt: {
+    label: "goods receipt",
+    fields: [{ key: "receipt_date", label: "Receipt date", type: "date" }],
+    note: "Quantities are fixed once stock has moved — void the receipt to change them.",
+  },
+  delivery_note: {
+    label: "delivery note",
+    fields: [{ key: "delivery_date", label: "Delivery date", type: "date" }],
+    note: "Quantities are fixed once stock has moved — void the note to change them.",
+  },
+  customer_payment: {
+    label: "receipt",
+    fields: [
+      { key: "reference", label: "Reference", type: "text" },
+      {
+        key: "method",
+        label: "Method",
+        type: "select",
+        options: [
+          { value: "bank_transfer", label: "Bank transfer" },
+          { value: "cheque", label: "Cheque" },
+          { value: "cash", label: "Cash" },
+          { value: "card", label: "Card" },
+        ],
+      },
+    ],
+    note: "The posted amount cannot change. Reverse the receipt to correct it.",
+  },
+  supplier_payment: {
+    label: "payment",
+    fields: [
+      { key: "reference", label: "Reference", type: "text" },
+      {
+        key: "method",
+        label: "Method",
+        type: "select",
+        options: [
+          { value: "bank_transfer", label: "Bank transfer" },
+          { value: "cheque", label: "Cheque" },
+          { value: "cash", label: "Cash" },
+          { value: "card", label: "Card" },
+        ],
+      },
+    ],
+    note: "The posted amount cannot change. Reverse the payment to correct it.",
+  },
+};
+
+export function EditDocDialog({
+  type,
+  row,
+  onOpenChange,
+}: {
+  type: keyof typeof EDIT_CFG | string;
+  row: any | null;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const cfg = EDIT_CFG[type];
+  const [f, setF] = useState<Record<string, any>>({});
+  const [lines, setLines] = useState<Line[]>([]);
+  const editableLines = !!cfg?.itemsTable && (type !== "invoice" || row?.status === "draft");
+
+  const items = useQuery({
+    queryKey: ["edit-items", cfg?.itemsTable, row?.id],
+    enabled: !!row && editableLines,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from(cfg!.itemsTable!)
+        .select("*")
+        .eq(cfg!.itemsFk!, row.id);
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (row && cfg) {
+      const next: Record<string, any> = {};
+      cfg.fields.forEach((fl) => (next[fl.key] = row[fl.key] ?? ""));
+      setF(next);
+    }
+  }, [row, cfg]);
+
+  useEffect(() => {
+    if (items.data)
+      setLines(
+        items.data.map((i: any, n: number) => ({
+          key: n + 1,
+          product_id: i.product_id ?? "",
+          description: i.description ?? "",
+          quantity: Number(i.quantity),
+          unit_price: Number(i.unit_price),
+          discount: Number(i.discount ?? 0),
+          vat_rate: Number(i.vat_rate ?? 0.05),
+        })),
+      );
+  }, [items.data]);
+
+  const mut = useAction(
+    async () => {
+      const payload = editableLines
+        ? lines.filter((l) => l.quantity > 0).map(({ key: _k, ...l }) => ({ ...l, product_id: l.product_id || null }))
+        : null;
+      if (editableLines && payload && payload.length === 0) throw new Error("Keep at least one line");
+      await actions.updateDocument({ type: String(type), id: row.id, patch: f, items: payload });
+    },
+    { scope: `edit_${String(type)}`, success: "Changes saved and audited", onSuccess: () => onOpenChange(false) },
+  );
+
+  if (!cfg) return null;
+
+  return (
+    <FormDialog
+      open={!!row}
+      onOpenChange={onOpenChange}
+      title={`Edit ${cfg.label} · ${row?.number ?? ""}`}
+      description={cfg.note}
+      onSubmit={() => mut.mutate(undefined as never)}
+      submitLabel="Save changes"
+      busy={mut.isPending}
+      wide={editableLines}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        {cfg.fields.map((fl) => (
+          <Field key={fl.key} label={fl.label}>
+            {fl.type === "select" ? (
+              <NativeSelect value={String(f[fl.key] ?? "")} onChange={(v) => setF((s) => ({ ...s, [fl.key]: v }))}>
+                {(fl.options ?? []).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            ) : (
+              <Input
+                type={fl.type === "date" ? "date" : "text"}
+                value={f[fl.key] ?? ""}
+                onChange={(e) => setF((s) => ({ ...s, [fl.key]: e.target.value }))}
+                className="h-8 text-[13px]"
+              />
+            )}
+          </Field>
+        ))}
+      </div>
+      {editableLines ? (
+        <LineItemsEditor
+          lines={lines}
+          onChange={setLines}
+          priceField={cfg.priceField ?? "cost"}
+          {...(cfg.showDiscount ? { showDiscount: true } : {})}
+        />
+      ) : null}
+    </FormDialog>
+  );
+}
+
