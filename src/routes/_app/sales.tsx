@@ -285,7 +285,11 @@ function Sales() {
                 .filter((d: any) => filter(d.number) || filter(nameById.get(d.customer_id) ?? ""))
                 .slice(0, 120)
                 .map((d: any) => (
-                  <tr key={d.id} className="row-hover hover:bg-secondary/40">
+                  <tr
+                    key={d.id}
+                    className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "dn", id: d.id } })}
+                  >
                     <Td>
                       <span className="num font-medium">{d.number}</span>
                     </Td>
@@ -324,7 +328,11 @@ function Sales() {
                 .filter((p: any) => filter(p.number) || filter(nameById.get(p.customer_id) ?? ""))
                 .slice(0, 120)
                 .map((p: any) => (
-                  <tr key={p.id} className="row-hover hover:bg-secondary/40">
+                  <tr
+                    key={p.id}
+                    className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "receipt", id: p.id } })}
+                  >
                     <Td>
                       <span className="num font-medium">{p.number}</span>
                     </Td>
