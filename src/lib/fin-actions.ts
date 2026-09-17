@@ -184,7 +184,47 @@ export const actions = {
     rpc<
       { code: string; name: string; type: string; subtype: string | null; opening: number; movement: number; debit: number; credit: number }[]
     >("report_period", { p_company: COMPANY_ID, p_from: from, p_to: to }),
+
+  /* ---- banking ---- */
+  importBankTransactions: (p: {
+    bank_account_id: string;
+    rows: { txn_date: string; description: string; reference?: string | null; amount: number; direction?: string; balance_after?: number | null }[];
+    batch?: string;
+  }) =>
+    rpc<{ imported: number; duplicates: number; suggested: number; batch: string }>("import_bank_transactions", {
+      p_company: COMPANY_ID,
+      p_bank_account: p.bank_account_id,
+      p_rows: p.rows,
+      p_batch: p.batch ?? null,
+    }),
+  allocateBankTransaction: (p: { txn_id: string; kind: "invoice" | "bill" | "gl"; target_id?: string | null; account_code?: string | null }) =>
+    rpc<{ payment: string | null; journal: string | null; label: string }>("allocate_bank_transaction", {
+      p_txn: p.txn_id,
+      p_kind: p.kind,
+      p_target: p.target_id ?? null,
+      p_account_code: p.account_code ?? null,
+      p_actor: "Ahmed Rahman",
+    }),
+  unmatchBankTransaction: (id: string) => rpc<void>("unmatch_bank_transaction", { p_txn: id, p_actor: "Ahmed Rahman" }),
+  reconcileBankAccount: (p: { bank_account_id: string; period_label: string; statement_balance: number }) =>
+    rpc<string>("reconcile_bank_account", {
+      p_bank_account: p.bank_account_id,
+      p_period_label: p.period_label,
+      p_statement_balance: p.statement_balance,
+      p_actor: "Ahmed Rahman",
+    }),
+
+  /* ---- guarded document edits ---- */
+  updateDocument: (p: { type: string; id: string; patch?: Record<string, unknown>; items?: LineInput[] | null }) =>
+    rpc<void>("update_document", {
+      p_type: p.type,
+      p_id: p.id,
+      p_patch: p.patch ?? {},
+      p_items: p.items ?? null,
+      p_actor: "Ahmed Rahman",
+    }),
 };
+
 
 /**
  * Generic mutation hook: runs an action, refreshes every cached figure so
