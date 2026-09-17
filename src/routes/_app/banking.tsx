@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useTable, rankMatches } from "@/lib/fin-data";
 import { money, shortDate, titleCase } from "@/lib/format";
 import {
@@ -280,9 +280,8 @@ function Banking() {
                 const candidates =
                   isOpen && t.status !== "matched" ? rankMatches(t, invoices.data ?? [], bills.data ?? []) : [];
                 return (
-                  <>
+                  <Fragment key={t.id}>
                     <tr
-                      key={t.id}
                       className="row-hover cursor-pointer hover:bg-secondary/40"
                       onClick={() => setExpanded(isOpen ? null : t.id)}
                     >
@@ -306,7 +305,7 @@ function Banking() {
                       </Td>
                     </tr>
                     {isOpen ? (
-                      <tr key={`${t.id}-x`}>
+                      <tr>
                         <td colSpan={7} className="border-b border-border bg-secondary/40 px-4 py-4">
                           {t.status === "matched" ? (
                             <p className="text-[13px] text-muted-foreground">
@@ -406,7 +405,7 @@ function Banking() {
                         </td>
                       </tr>
                     ) : null}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

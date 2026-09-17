@@ -17,9 +17,9 @@ import {
 } from "@/components/fin/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FormDialog, Field, ConfirmDialog } from "@/components/fin/forms";
+import { FormDialog, Field, ConfirmDialog, EditDocDialog } from "@/components/fin/forms";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
-import { ArrowLeft, PackageCheck, ReceiptText } from "lucide-react";
+import { ArrowLeft, PackageCheck, ReceiptText, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_app/purchases_/$id")({
   head: () => ({
@@ -66,6 +66,7 @@ function PurchaseOrderDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const [receiveOpen, setReceiveOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [confirmReceive, setConfirmReceive] = useState(false);
   const [qty, setQty] = useState<Record<string, string>>({});
@@ -193,7 +194,12 @@ function PurchaseOrderDetail() {
                 <PackageCheck className="mr-1.5 h-3.5 w-3.5" /> Receive goods
               </Button>
             ) : null}
-            {po.data.status !== "cancelled" ? (
+            {editable ? (
+              <Button size="sm" variant="ghost" onClick={() => setEditOpen(true)} title="Edit this order">
+                <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
+              </Button>
+            ) : null}
+            {po.data.status !== "cancelled" && billItems.length > 0 ? (
               <Button size="sm" onClick={() => setBillOpen(true)}>
                 <ReceiptText className="mr-1.5 h-3.5 w-3.5" /> Create bill
               </Button>
@@ -201,6 +207,7 @@ function PurchaseOrderDetail() {
           </>
         }
       />
+      <EditDocDialog type="purchase_order" row={editOpen ? po.data : null} onOpenChange={(v) => !v && setEditOpen(false)} />
 
       <AutomationNote>
         {editable
@@ -278,7 +285,11 @@ function PurchaseOrderDetail() {
             </thead>
             <tbody>
               {(receipts.data ?? []).map((r: any) => (
-                <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                <tr
+                  key={r.id}
+                  className="row-hover cursor-pointer hover:bg-secondary/40"
+                  onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "grn", id: r.id } })}
+                >
                   <Td>
                     <span className="num font-medium">{r.number}</span>
                   </Td>
@@ -310,7 +321,11 @@ function PurchaseOrderDetail() {
             </thead>
             <tbody>
               {(bills.data ?? []).map((b: any) => (
-                <tr key={b.id} className="row-hover hover:bg-secondary/40">
+                <tr
+                  key={b.id}
+                  className="row-hover cursor-pointer hover:bg-secondary/40"
+                  onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "bill", id: b.id } })}
+                >
                   <Td>
                     <span className="num font-medium">{b.number}</span>
                   </Td>

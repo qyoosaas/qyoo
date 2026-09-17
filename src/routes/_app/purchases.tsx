@@ -197,7 +197,9 @@ function Purchases() {
                 .filter((b: any) => filter(b.number) || filter(nameById.get(b.supplier_id) ?? ""))
                 .slice(0, 120)
                 .map((b: any) => (
-                  <tr key={b.id} className="row-hover hover:bg-secondary/40">
+                  <tr key={b.id} className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "bill", id: b.id } })}
+                  >
                     <Td>
                       <span className="num font-medium">{b.number}</span>
                     </Td>
@@ -295,7 +297,9 @@ function Purchases() {
                 .filter((r: any) => filter(r.number))
                 .slice(0, 120)
                 .map((r: any) => (
-                  <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                  <tr key={r.id} className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "grn", id: r.id } })}
+                  >
                     <Td>
                       <span className="num font-medium">{r.number}</span>
                     </Td>
@@ -328,7 +332,9 @@ function Purchases() {
                 .filter((p: any) => filter(p.number))
                 .slice(0, 120)
                 .map((p: any) => (
-                  <tr key={p.id} className="row-hover hover:bg-secondary/40">
+                  <tr key={p.id} className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "payment", id: p.id } })}
+                  >
                     <Td>
                       <span className="num font-medium">{p.number}</span>
                     </Td>
@@ -371,7 +377,9 @@ function Purchases() {
             </thead>
             <tbody>
               {bySupplier.map((r) => (
-                <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                <tr key={r.id} className="row-hover cursor-pointer hover:bg-secondary/40"
+                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "grn", id: r.id } })}
+                  >
                   <Td>{r.name}</Td>
                   {r.buckets.map((v, i) => (
                     <Td key={i} right>
