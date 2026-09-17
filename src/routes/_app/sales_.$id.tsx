@@ -17,9 +17,9 @@ import {
 } from "@/components/fin/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FormDialog, Field, ConfirmDialog } from "@/components/fin/forms";
+import { FormDialog, Field, ConfirmDialog, EditDocDialog } from "@/components/fin/forms";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
-import { ArrowLeft, Truck, ReceiptText } from "lucide-react";
+import { ArrowLeft, Truck, ReceiptText, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sales_/$id")({
   head: () => ({
@@ -66,6 +66,7 @@ function SalesOrderDetail() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const [deliverOpen, setDeliverOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [confirmDeliver, setConfirmDeliver] = useState(false);
   const [qty, setQty] = useState<Record<string, string>>({});
@@ -284,7 +285,11 @@ function SalesOrderDetail() {
             </thead>
             <tbody>
               {(deliveries.data ?? []).map((d: any) => (
-                <tr key={d.id} className="row-hover hover:bg-secondary/40">
+                <tr
+                  key={d.id}
+                  className="row-hover cursor-pointer hover:bg-secondary/40"
+                  onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "dn", id: d.id } })}
+                >
                   <Td>
                     <span className="num font-medium">{d.number}</span>
                   </Td>
