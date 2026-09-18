@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789746561381,
+      "tag": "0000_document_intelligence_engine",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789746595789,
+      "tag": "0001_document_storage_policies",
+      "breakpoints": true
+    }
+  ]
+}
