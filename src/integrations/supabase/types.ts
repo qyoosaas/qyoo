@@ -836,6 +836,165 @@ export type Database = {
           },
         ]
       }
+      document_upload_events: {
+        Row: {
+          actor: string | null
+          created_at: string
+          detail: string | null
+          document_upload_id: string
+          id: string
+          payload: Json | null
+          stage: string
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          detail?: string | null
+          document_upload_id: string
+          id?: string
+          payload?: Json | null
+          stage: string
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          detail?: string | null
+          document_upload_id?: string
+          id?: string
+          payload?: Json | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_upload_events_document_upload_id_fkey"
+            columns: ["document_upload_id"]
+            isOneToOne: false
+            referencedRelation: "document_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_uploads: {
+        Row: {
+          approved_at: string | null
+          company_id: string
+          created_at: string
+          doc_type: string
+          doc_type_confidence: number
+          doc_type_source: string
+          duplicate_of: string | null
+          error_message: string | null
+          exception_id: string | null
+          field_confidence: Json
+          file_name: string
+          final_posted_data: Json | null
+          id: string
+          linked_entity_id: string | null
+          linked_entity_label: string | null
+          linked_entity_type: string | null
+          matches: Json
+          mime_type: string | null
+          original_extraction: Json | null
+          overall_confidence: number
+          processed_at: string | null
+          processor: string | null
+          processor_version: string | null
+          size_kb: number
+          source: string
+          status: string
+          storage_path: string | null
+          uploaded_by: string | null
+          user_corrected_data: Json | null
+          validation: Json
+        }
+        Insert: {
+          approved_at?: string | null
+          company_id: string
+          created_at?: string
+          doc_type?: string
+          doc_type_confidence?: number
+          doc_type_source?: string
+          duplicate_of?: string | null
+          error_message?: string | null
+          exception_id?: string | null
+          field_confidence?: Json
+          file_name: string
+          final_posted_data?: Json | null
+          id?: string
+          linked_entity_id?: string | null
+          linked_entity_label?: string | null
+          linked_entity_type?: string | null
+          matches?: Json
+          mime_type?: string | null
+          original_extraction?: Json | null
+          overall_confidence?: number
+          processed_at?: string | null
+          processor?: string | null
+          processor_version?: string | null
+          size_kb?: number
+          source?: string
+          status?: string
+          storage_path?: string | null
+          uploaded_by?: string | null
+          user_corrected_data?: Json | null
+          validation?: Json
+        }
+        Update: {
+          approved_at?: string | null
+          company_id?: string
+          created_at?: string
+          doc_type?: string
+          doc_type_confidence?: number
+          doc_type_source?: string
+          duplicate_of?: string | null
+          error_message?: string | null
+          exception_id?: string | null
+          field_confidence?: Json
+          file_name?: string
+          final_posted_data?: Json | null
+          id?: string
+          linked_entity_id?: string | null
+          linked_entity_label?: string | null
+          linked_entity_type?: string | null
+          matches?: Json
+          mime_type?: string | null
+          original_extraction?: Json | null
+          overall_confidence?: number
+          processed_at?: string | null
+          processor?: string | null
+          processor_version?: string | null
+          size_kb?: number
+          source?: string
+          status?: string
+          storage_path?: string | null
+          uploaded_by?: string | null
+          user_corrected_data?: Json | null
+          validation?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_uploads_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_uploads_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "document_uploads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_uploads_exception_id_fkey"
+            columns: ["exception_id"]
+            isOneToOne: false
+            referencedRelation: "exceptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string
