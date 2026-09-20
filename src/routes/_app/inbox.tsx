@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_app/inbox")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Inbox;
+  component: Inbox,
 });
 
 const ACCEPT = ".pdf,.jpg,.jpeg,.png,.tif,.tiff,.csv,.xlsx,.xls,.tsv,.txt";
