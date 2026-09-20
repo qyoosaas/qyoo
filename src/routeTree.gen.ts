@@ -18,6 +18,7 @@ import { Route as AppBankingRouteImport } from './routes/_app/banking'
 import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppFpaRouteImport } from './routes/_app/fpa'
+import { Route as AppInboxRouteImport } from './routes/_app/inbox'
 import { Route as AppInventoryRouteImport } from './routes/_app/inventory'
 import { Route as AppOverviewRouteImport } from './routes/_app/overview'
 import { Route as AppProductionRouteImport } from './routes/_app/production'
@@ -25,6 +26,7 @@ import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppInboxIdRouteImport } from './routes/_app/inbox_.$id'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
 import { Route as AppPurchasesIdRouteImport } from './routes/_app/purchases_.$id'
 import { Route as AppSalesIdRouteImport } from './routes/_app/sales_.$id'
@@ -74,6 +76,11 @@ const AppFpaRoute = AppFpaRouteImport.update({
   path: '/fpa',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInventoryRoute = AppInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -109,6 +116,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInboxIdRoute = AppInboxIdRouteImport.update({
+  id: '/inbox_/$id',
+  path: '/inbox/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
   id: '/invoices/$id',
   path: '/invoices/$id',
@@ -139,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/documents': typeof AppDocumentsRoute
   '/expenses': typeof AppExpensesRoute
   '/fpa': typeof AppFpaRoute
+  '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
@@ -146,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
+  '/inbox/$id': typeof AppInboxIdRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
   '/purchases/$id': typeof AppPurchasesIdRoute
   '/sales/$id': typeof AppSalesIdRoute
@@ -160,6 +174,7 @@ export interface FileRoutesByTo {
   '/documents': typeof AppDocumentsRoute
   '/expenses': typeof AppExpensesRoute
   '/fpa': typeof AppFpaRoute
+  '/inbox': typeof AppInboxRoute
   '/inventory': typeof AppInventoryRoute
   '/overview': typeof AppOverviewRoute
   '/production': typeof AppProductionRoute
@@ -167,6 +182,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
+  '/inbox/$id': typeof AppInboxIdRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
   '/purchases/$id': typeof AppPurchasesIdRoute
   '/sales/$id': typeof AppSalesIdRoute
@@ -183,6 +199,7 @@ export interface FileRoutesById {
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/fpa': typeof AppFpaRoute
+  '/_app/inbox': typeof AppInboxRoute
   '/_app/inventory': typeof AppInventoryRoute
   '/_app/overview': typeof AppOverviewRoute
   '/_app/production': typeof AppProductionRoute
@@ -190,6 +207,7 @@ export interface FileRoutesById {
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/inbox_/$id': typeof AppInboxIdRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
   '/_app/purchases_/$id': typeof AppPurchasesIdRoute
   '/_app/sales_/$id': typeof AppSalesIdRoute
@@ -206,6 +224,7 @@ export interface FileRouteTypes {
     | '/documents'
     | '/expenses'
     | '/fpa'
+    | '/inbox'
     | '/inventory'
     | '/overview'
     | '/production'
@@ -213,6 +232,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/inbox/$id'
     | '/invoices/$id'
     | '/purchases/$id'
     | '/sales/$id'
@@ -227,6 +247,7 @@ export interface FileRouteTypes {
     | '/documents'
     | '/expenses'
     | '/fpa'
+    | '/inbox'
     | '/inventory'
     | '/overview'
     | '/production'
@@ -234,6 +255,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/inbox/$id'
     | '/invoices/$id'
     | '/purchases/$id'
     | '/sales/$id'
@@ -249,6 +271,7 @@ export interface FileRouteTypes {
     | '/_app/documents'
     | '/_app/expenses'
     | '/_app/fpa'
+    | '/_app/inbox'
     | '/_app/inventory'
     | '/_app/overview'
     | '/_app/production'
@@ -256,6 +279,7 @@ export interface FileRouteTypes {
     | '/_app/reports'
     | '/_app/sales'
     | '/_app/settings'
+    | '/_app/inbox_/$id'
     | '/_app/invoices/$id'
     | '/_app/purchases_/$id'
     | '/_app/sales_/$id'
@@ -333,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFpaRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inbox': {
+      id: '/_app/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/inventory': {
       id: '/_app/inventory'
       path: '/inventory'
@@ -382,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inbox_/$id': {
+      id: '/_app/inbox_/$id'
+      path: '/inbox/$id'
+      fullPath: '/inbox/$id'
+      preLoaderRoute: typeof AppInboxIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/invoices/$id': {
       id: '/_app/invoices/$id'
       path: '/invoices/$id'
@@ -420,6 +458,7 @@ interface AppRouteChildren {
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppExpensesRoute: typeof AppExpensesRoute
   AppFpaRoute: typeof AppFpaRoute
+  AppInboxRoute: typeof AppInboxRoute
   AppInventoryRoute: typeof AppInventoryRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppProductionRoute: typeof AppProductionRoute
@@ -427,6 +466,7 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppInboxIdRoute: typeof AppInboxIdRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
   AppPurchasesIdRoute: typeof AppPurchasesIdRoute
   AppSalesIdRoute: typeof AppSalesIdRoute
@@ -440,6 +480,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDocumentsRoute: AppDocumentsRoute,
   AppExpensesRoute: AppExpensesRoute,
   AppFpaRoute: AppFpaRoute,
+  AppInboxRoute: AppInboxRoute,
   AppInventoryRoute: AppInventoryRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppProductionRoute: AppProductionRoute,
@@ -447,6 +488,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppInboxIdRoute: AppInboxIdRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
   AppPurchasesIdRoute: AppPurchasesIdRoute,
   AppSalesIdRoute: AppSalesIdRoute,
