@@ -10,7 +10,6 @@ import {
   Boxes,
   Factory,
   BookOpen,
-  FileText,
   Inbox,
   LineChart,
   BarChart3,
@@ -46,8 +45,8 @@ const NAV = [
   { to: "/inventory", label: "Inventory", icon: Boxes },
   { to: "/production", label: "Production", icon: Factory },
   { to: "/accounting", label: "Accounting", icon: BookOpen },
-  { to: "/inbox", label: "Document Inbox", icon: Inbox },
-  { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/documents", label: "Documents", icon: Inbox },
+
   { to: "/fpa", label: "FP&A", icon: LineChart },
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ] as const;
