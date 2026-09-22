@@ -358,7 +358,7 @@ function Review() {
           <>
             <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-[13px]" onClick={() => navigate({ to: "/documents" })}>
               <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Inbox
+              Documents
             </Button>
             <Button
               variant="outline"

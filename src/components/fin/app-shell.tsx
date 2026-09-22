@@ -10,7 +10,6 @@ import {
   Boxes,
   Factory,
   BookOpen,
-  FileText,
   Inbox,
   LineChart,
   BarChart3,

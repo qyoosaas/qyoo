@@ -35,13 +35,13 @@ import { humanError, logTechnical } from "@/lib/fin-errors";
 export const Route = createFileRoute("/_app/documents")({
   head: () => ({
     meta: [
-      { title: "Document Inbox · Qyoo · Autonomous Finance OS" },
+      { title: "Documents · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Drop any financial document — invoice, purchase order, GRN, bank statement or receipt. Qyoo classifies it, extracts the data, validates the arithmetic and prepares the workflow for your approval.",
       },
-      { property: "og:title", content: "Document Inbox · Qyoo" },
+      { property: "og:title", content: "Documents · Qyoo" },
       { property: "og:description", content: "Give Qyoo a document and it understands what happened." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -169,7 +169,7 @@ function Inbox() {
   return (
     <>
       <PageHeader
-        title="Document Inbox"
+        title="Documents"
         subtitle="Give Qyoo a financial document and it understands what happened"
         actions={
           <>
