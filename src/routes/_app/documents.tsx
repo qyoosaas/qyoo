@@ -319,7 +319,7 @@ function Inbox() {
                 return (
                   <tr
                     key={d.id}
-                    onClick={() => navigate({ to: "/inbox/$id", params: { id: d.id } })}
+                    onClick={() => navigate({ to: "/documents/$id", params: { id: d.id } })}
                     className="row-hover cursor-pointer hover:bg-secondary/40"
                   >
                     <Td className="max-w-[280px] truncate font-medium">
