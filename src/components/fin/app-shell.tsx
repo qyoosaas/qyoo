@@ -88,7 +88,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col border-r border-border bg-sidebar lg:flex">
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-          <img src={qyooLogo.url} alt="Qyoo" className="h-[18px] w-auto" />
+          <img src={qyooLogo.url} alt="Qyoo" className="h-[22px] w-auto" />
           <span className="label-xs ml-auto">OS</span>
         </div>
 

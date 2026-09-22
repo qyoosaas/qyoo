@@ -74,7 +74,7 @@ function AuthPage() {
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <div className="hidden flex-col justify-between border-r border-border bg-sidebar p-12 lg:flex">
         <div className="flex items-center gap-2.5">
-          <img src={qyooLogo.url} alt="Qyoo" className="h-[22px] w-auto" />
+          <img src={qyooLogo.url} alt="Qyoo" className="h-[26px] w-auto" />
         </div>
 
         <div className="max-w-[440px]">
