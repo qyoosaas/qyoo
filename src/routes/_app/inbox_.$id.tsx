@@ -88,6 +88,7 @@ function Review() {
   });
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
   const [draft, setDraft] = useState<Extraction | null>(null);
   const [focusField, setFocusField] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -108,7 +109,17 @@ function Review() {
       .from("documents")
       .createSignedUrl(row.storage_path, 3600)
       .then(({ data }) => {
-        if (alive) setPreview(data?.signedUrl ?? null);
+        if (!alive) return;
+        const url = data?.signedUrl ?? null;
+        setPreview(url);
+        if (url && /\.(csv|tsv|txt)$/i.test(row.file_name ?? "")) {
+          fetch(url)
+            .then((r) => r.text())
+            .then((t) => {
+              if (alive) setPreviewText(t.slice(0, 20000));
+            })
+            .catch(() => undefined);
+        }
       });
     return () => {
       alive = false;
@@ -428,7 +439,11 @@ function Review() {
         {/* ------------------------- original document ------------------------- */}
         <Panel title="Original document" description={`${row.mime_type ?? "file"} · ${row.size_kb} KB`}>
           <div className="relative h-[620px] overflow-hidden bg-secondary/30">
-            {preview ? (
+            {previewText != null ? (
+              <pre className="num h-full overflow-auto p-4 text-[12px] leading-relaxed whitespace-pre-wrap">
+                {previewText}
+              </pre>
+            ) : preview ? (
               /\.(png|jpe?g|tiff?|gif|webp)$/i.test(row.file_name) ? (
                 <img src={preview} alt={row.file_name} className="h-full w-full object-contain" />
               ) : (
