@@ -18,13 +18,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/action-required")({
   head: () => ({
     meta: [
-      { title: "Action Required · FIN Autonomous Finance OS" },
+      { title: "Action Required · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Every finance exception that needs a human decision, ranked by impact — with the reason, the recommendation and the accounting entry that will post.",
       },
-      { property: "og:title", content: "Action Required · FIN" },
+      { property: "og:title", content: "Action Required · Qyoo" },
       { property: "og:description", content: "Only what genuinely needs a decision." },
     ],
   }),
@@ -55,11 +55,11 @@ function ActionRequired() {
     <>
       <PageHeader
         title="Action Required"
-        subtitle="The only queue in FIN. Everything else posted itself."
+        subtitle="The only queue in Qyoo. Everything else posted itself."
       />
 
       <AutomationNote>
-        FIN cleared everything it could match with confidence. {open.length} items remain, worth{" "}
+        Qyoo cleared everything it could match with confidence. {open.length} items remain, worth{" "}
         <strong className="font-medium">{money(exposure, true)}</strong> in financial exposure.
         Each one shows what happened, why it stopped, and the entry that posts when you decide.
       </AutomationNote>

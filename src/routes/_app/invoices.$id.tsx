@@ -18,13 +18,13 @@ import { ArrowLeft } from "lucide-react";
 export const Route = createFileRoute("/_app/invoices/$id")({
   head: () => ({
     meta: [
-      { title: "Invoice · FIN Autonomous Finance OS" },
+      { title: "Invoice · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Full invoice detail with lines, VAT treatment, receipts applied and the journal entry FIN posted to the general ledger.",
+          "Full invoice detail with lines, VAT treatment, receipts applied and the journal entry Qyoo posted to the general ledger.",
       },
-      { property: "og:title", content: "Invoice detail · FIN" },
+      { property: "og:title", content: "Invoice detail · Qyoo" },
       { property: "og:description", content: "Document, ledger entry and audit trail in one view." },
     ],
   }),
@@ -85,7 +85,7 @@ function InvoiceDetail() {
       />
 
       <AutomationNote>
-        FIN generated this invoice from the sales order, applied 5% UAE VAT, posted revenue,
+        Qyoo generated this invoice from the sales order, applied 5% UAE VAT, posted revenue,
         receivable and VAT output to the ledger, and recognised {money(inv.cogs, true)} of cost of
         sales from weighted-average inventory — all without a human touch.
       </AutomationNote>

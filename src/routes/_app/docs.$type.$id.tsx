@@ -21,13 +21,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_app/docs/$type/$id")({
   head: () => ({
     meta: [
-      { title: "Document · FIN Autonomous Finance OS" },
+      { title: "Document · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Full detail for a delivery note, goods receipt, supplier bill, receipt or payment, including lines, linked documents and audit trail.",
       },
-      { property: "og:title", content: "Document · FIN" },
+      { property: "og:title", content: "Document · Qyoo" },
       { property: "og:description", content: "Every document opens on its own page." },
     ],
   }),

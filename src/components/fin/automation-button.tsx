@@ -22,7 +22,7 @@ export function RunAutomationButton({ variant = "outline" }: { variant?: "outlin
         open={confirm}
         onOpenChange={setConfirm}
         title="Run the automation cycle?"
-        description="FIN will re-check overdue invoices, upcoming supplier payments, stock levels and unmatched bank lines, and may raise new items in Action Required. The whole run is a single transaction — if any step fails, nothing is changed."
+        description="Qyoo will re-check overdue invoices, upcoming supplier payments, stock levels and unmatched bank lines, and may raise new items in Action Required. The whole run is a single transaction — if any step fails, nothing is changed."
         confirmLabel="Run automation"
         onConfirm={() => {
           setConfirm(false);

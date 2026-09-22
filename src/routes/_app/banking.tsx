@@ -26,13 +26,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/banking")({
   head: () => ({
     meta: [
-      { title: "Banking · FIN Autonomous Finance OS" },
+      { title: "Banking · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Import bank statements, allocate receipts and payments to invoices, bills or ledger accounts, and reconcile every account against its statement balance.",
       },
-      { property: "og:title", content: "Banking · FIN" },
+      { property: "og:title", content: "Banking · Qyoo" },
       { property: "og:description", content: "Reconciliation that keeps itself current." },
     ],
   }),
@@ -626,7 +626,7 @@ function ReconcileDialog({
       open={open}
       onOpenChange={onOpenChange}
       title="Reconcile bank account"
-      description="Enter the closing balance on the bank statement. FIN compares it against the ledger and records the difference."
+      description="Enter the closing balance on the bank statement. Qyoo compares it against the ledger and records the difference."
       onSubmit={() => mut.mutate(undefined as never)}
       submitLabel="Save reconciliation"
       busy={mut.isPending}

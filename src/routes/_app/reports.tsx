@@ -13,13 +13,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/reports")({
   head: () => ({
     meta: [
-      { title: "Reports · FIN Autonomous Finance OS" },
+      { title: "Reports · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Profit & loss, balance sheet, cash flow statement, trial balance, VAT return and ageing for any period — built live from the general ledger.",
       },
-      { property: "og:title", content: "Reports · FIN" },
+      { property: "og:title", content: "Reports · Qyoo" },
       { property: "og:description", content: "Financial statements for any period, live." },
     ],
   }),
@@ -400,7 +400,7 @@ function Reports() {
             </TableShell>
           </div>
           <p className="px-4 py-3 text-xs text-muted-foreground">
-            {pInv.length} sales invoices and {pBill.length + pExp.length} purchase documents in scope. FIN flags any invoice missing a valid TRN before filing.
+            {pInv.length} sales invoices and {pBill.length + pExp.length} purchase documents in scope. Qyoo flags any invoice missing a valid TRN before filing.
           </p>
         </Panel>
       ) : (

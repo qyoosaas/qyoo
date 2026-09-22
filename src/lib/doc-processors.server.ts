@@ -1,7 +1,7 @@
 /**
  * Document processing provider abstraction.
  *
- * FIN never talks to an OCR engine directly. Every processor implements the
+ * Qyoo never talks to an OCR engine directly. Every processor implements the
  * same `DocumentProcessor` contract and returns the neutral `Extraction` shape
  * from `@/lib/doc-intel`, so a provider can be swapped without touching the UI
  * or the accounting workflows.
@@ -56,7 +56,7 @@ abstract class RemoteProcessor implements DocumentProcessor {
 
     const res = await fetch(`${base}${this.endpoint()}`, {
       method: "POST",
-      headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      ...(token ? { headers: { authorization: `Bearer ${token}` } } : {}),
       body: form,
     });
     if (!res.ok) {

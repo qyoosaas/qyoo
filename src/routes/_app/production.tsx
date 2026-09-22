@@ -18,13 +18,13 @@ import {
 export const Route = createFileRoute("/_app/production")({
   head: () => ({
     meta: [
-      { title: "Production · FIN Autonomous Finance OS" },
+      { title: "Production · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Production orders, bills of materials, material consumption and cost variance — costed automatically as work orders close.",
       },
-      { property: "og:title", content: "Production · FIN" },
+      { property: "og:title", content: "Production · Qyoo" },
       { property: "og:description", content: "Standard versus actual, every run." },
     ],
   }),
@@ -57,7 +57,7 @@ function Production() {
       <PageHeader title="Production" subtitle="Work orders costed against BOM standards as they close" />
 
       <AutomationNote>
-        {completed.length} production orders closed this year. FIN consumed materials at weighted-average
+        {completed.length} production orders closed this year. Qyoo consumed materials at weighted-average
         cost, capitalised labour and overhead, and booked finished goods automatically.{" "}
         {overVariance.length} runs exceeded the 5% variance threshold and were raised for review.
       </AutomationNote>

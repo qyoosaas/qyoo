@@ -24,13 +24,13 @@ import { ArrowLeft, PackageCheck, ReceiptText, Pencil } from "lucide-react";
 export const Route = createFileRoute("/_app/purchases_/$id")({
   head: () => ({
     meta: [
-      { title: "Purchase order · FIN Autonomous Finance OS" },
+      { title: "Purchase order · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Purchase order detail with goods receipts, supplier bills, line-by-line three-way match variance and full audit history.",
       },
-      { property: "og:title", content: "Purchase order · FIN" },
+      { property: "og:title", content: "Purchase order · Qyoo" },
       { property: "og:description", content: "Order, receipt and bill matched line by line." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

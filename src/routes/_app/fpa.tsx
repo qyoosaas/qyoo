@@ -8,13 +8,13 @@ import { PageHeader, Panel, Metric, Loading, TableShell, Th, Td, AutomationNote,
 export const Route = createFileRoute("/_app/fpa")({
   head: () => ({
     meta: [
-      { title: "FP&A · FIN Autonomous Finance OS" },
+      { title: "FP&A · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Budget versus actual, rolling forecasts and 13-week cash projection generated continuously from the live ledger.",
       },
-      { property: "og:title", content: "FP&A · FIN" },
+      { property: "og:title", content: "FP&A · Qyoo" },
       { property: "og:description", content: "Planning that updates itself." },
     ],
   }),

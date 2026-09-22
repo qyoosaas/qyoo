@@ -40,13 +40,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_app/inbox_/$id")({
   head: () => ({
     meta: [
-      { title: "Document review · FIN Autonomous Finance OS" },
+      { title: "Document review · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Split-screen review: the original document beside the structured data FIN extracted, with field-level confidence, deterministic validation and the workflow it will create.",
+          "Split-screen review: the original document beside the structured data Qyoo extracted, with field-level confidence, deterministic validation and the workflow it will create.",
       },
-      { property: "og:title", content: "Document review · FIN" },
+      { property: "og:title", content: "Document review · Qyoo" },
       { property: "og:description", content: "Extraction is not approval." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -88,6 +88,7 @@ function Review() {
   });
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
   const [draft, setDraft] = useState<Extraction | null>(null);
   const [focusField, setFocusField] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -108,7 +109,17 @@ function Review() {
       .from("documents")
       .createSignedUrl(row.storage_path, 3600)
       .then(({ data }) => {
-        if (alive) setPreview(data?.signedUrl ?? null);
+        if (!alive) return;
+        const url = data?.signedUrl ?? null;
+        setPreview(url);
+        if (url && /\.(csv|tsv|txt)$/i.test(row.file_name ?? "")) {
+          fetch(url)
+            .then((r) => r.text())
+            .then((t) => {
+              if (alive) setPreviewText(t.slice(0, 20000));
+            })
+            .catch(() => undefined);
+        }
       });
     return () => {
       alive = false;
@@ -402,19 +413,23 @@ function Review() {
             <Field label="Document type" className="w-[280px]">
               <NativeSelect
                 value={row.doc_type}
-                onChange={(e) => {
-                  const t = e.target.value;
+                onChange={(t) => {
                   pinType({ data: { id, docType: t } }).then(async () => {
                     await reprocess({ data: { id } });
                     qc.invalidateQueries({ queryKey: ["document_upload", id] });
                     qc.invalidateQueries({ queryKey: ["document_upload_events", id] });
                   });
                 }}
-                options={DOC_TYPES.map((t) => ({ value: t.id, label: t.label }))}
-              />
+              >
+                {DOC_TYPES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </NativeSelect>
             </Field>
             <p className="pb-2 text-xs text-muted-foreground">
-              FIN will re-read the document with that type. No assumption is made on your behalf.
+              Qyoo will re-read the document with that type. No assumption is made on your behalf.
             </p>
           </div>
         </Panel>
@@ -424,7 +439,11 @@ function Review() {
         {/* ------------------------- original document ------------------------- */}
         <Panel title="Original document" description={`${row.mime_type ?? "file"} · ${row.size_kb} KB`}>
           <div className="relative h-[620px] overflow-hidden bg-secondary/30">
-            {preview ? (
+            {previewText != null ? (
+              <pre className="num h-full overflow-auto p-4 text-[12px] leading-relaxed whitespace-pre-wrap">
+                {previewText}
+              </pre>
+            ) : preview ? (
               /\.(png|jpe?g|tiff?|gif|webp)$/i.test(row.file_name) ? (
                 <img src={preview} alt={row.file_name} className="h-full w-full object-contain" />
               ) : (
@@ -605,14 +624,14 @@ function Review() {
           )}
         </Panel>
 
-        <Panel title="Matching" description="What this document connects to in FIN">
+        <Panel title="Matching" description="What this document connects to in Qyoo">
           <dl className="space-y-2 px-4 py-3.5 text-[13px]">
             <MatchRow label="Supplier" value={matches.supplier ? `${matches.supplier.name} (${matches.supplier.score}% name match)` : "Not found"} />
             <MatchRow label="Customer" value={matches.customer ? `${matches.customer.name} (${matches.customer.score}% name match)` : "Not applicable"} />
             <MatchRow
               label="Purchase order"
               value={matches.purchase_order ? `${matches.purchase_order.number} · ${money(matches.purchase_order.total)}` : "None referenced"}
-              to={matches.purchase_order ? `/purchases/${matches.purchase_order.id}` : undefined}
+              {...(matches.purchase_order ? { to: `/purchases/${matches.purchase_order.id}` } : {})}
             />
             <MatchRow
               label="Goods receipts"
@@ -680,7 +699,7 @@ function Review() {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`Approve and create ${def?.workflow ?? "record"}?`}
-        description={`FIN will create the ${def?.workflow ?? "record"} from the approved data and post the matching accounting entries in one transaction. ${
+        description={`Qyoo will create the ${def?.workflow ?? "record"} from the approved data and post the matching accounting entries in one transaction. ${
           issues.some((i) => i.severity === "warning")
             ? "There are open warnings on this document — they will be recorded against the created transaction."
             : ""

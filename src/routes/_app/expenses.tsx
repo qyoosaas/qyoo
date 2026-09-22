@@ -22,13 +22,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_app/expenses")({
   head: () => ({
     meta: [
-      { title: "Expenses · FIN Autonomous Finance OS" },
+      { title: "Expenses · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Employee and company expenses categorised, VAT-split and posted automatically, with receipt-policy enforcement.",
       },
-      { property: "og:title", content: "Expenses · FIN" },
+      { property: "og:title", content: "Expenses · Qyoo" },
       { property: "og:description", content: "Expenses that file themselves." },
     ],
   }),
@@ -81,7 +81,7 @@ function Expenses() {
       />
 
       <AutomationNote>
-        {all.length} expenses captured this year. FIN assigned the category, split recoverable VAT and
+        {all.length} expenses captured this year. Qyoo assigned the category, split recoverable VAT and
         posted each one to the ledger. {missingDocs.length} above AED 100 still lack a receipt and are
         flagged under the receipt policy.
       </AutomationNote>

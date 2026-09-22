@@ -11,6 +11,7 @@ import {
   Factory,
   BookOpen,
   FileText,
+  Inbox,
   LineChart,
   BarChart3,
   Settings as SettingsIcon,
@@ -24,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useExceptions } from "@/lib/fin-data";
 import { cn } from "@/lib/utils";
+import qyooLogo from "@/assets/qyoo-logo.png.asset.json";
 import { CommandPalette } from "./command-palette";
 import {
   DropdownMenu,
@@ -44,6 +46,7 @@ const NAV = [
   { to: "/inventory", label: "Inventory", icon: Boxes },
   { to: "/production", label: "Production", icon: Factory },
   { to: "/accounting", label: "Accounting", icon: BookOpen },
+  { to: "/inbox", label: "Document Inbox", icon: Inbox },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/fpa", label: "FP&A", icon: LineChart },
   { to: "/reports", label: "Reports", icon: BarChart3 },
@@ -86,10 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col border-r border-border bg-sidebar lg:flex">
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-          <div className="flex h-6 w-6 items-center justify-center rounded-sm bg-primary">
-            <span className="signal-dot" />
-          </div>
-          <span className="text-[15px] font-semibold tracking-[-0.02em]">FIN</span>
+          <img src={qyooLogo.url} alt="Qyoo" className="h-[18px] w-auto" />
           <span className="label-xs ml-auto">OS</span>
         </div>
 

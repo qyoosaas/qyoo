@@ -35,14 +35,14 @@ import { humanError, logTechnical } from "@/lib/fin-errors";
 export const Route = createFileRoute("/_app/inbox")({
   head: () => ({
     meta: [
-      { title: "Document Inbox · FIN Autonomous Finance OS" },
+      { title: "Document Inbox · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Drop any financial document — invoice, purchase order, GRN, bank statement or receipt. FIN classifies it, extracts the data, validates the arithmetic and prepares the workflow for your approval.",
+          "Drop any financial document — invoice, purchase order, GRN, bank statement or receipt. Qyoo classifies it, extracts the data, validates the arithmetic and prepares the workflow for your approval.",
       },
-      { property: "og:title", content: "Document Inbox · FIN" },
-      { property: "og:description", content: "Give FIN a document and it understands what happened." },
+      { property: "og:title", content: "Document Inbox · Qyoo" },
+      { property: "og:description", content: "Give Qyoo a document and it understands what happened." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -170,7 +170,7 @@ function Inbox() {
     <>
       <PageHeader
         title="Document Inbox"
-        subtitle="Give FIN a financial document and it understands what happened"
+        subtitle="Give Qyoo a financial document and it understands what happened"
         actions={
           <>
             <Button
@@ -290,7 +290,7 @@ function Inbox() {
         ) : rows.length === 0 ? (
           <EmptyState
             title="No documents yet"
-            hint="Upload an invoice, a bank statement or a receipt and FIN will take it from there."
+            hint="Upload an invoice, a bank statement or a receipt and Qyoo will take it from there."
           />
         ) : (
           <TableShell>
@@ -339,7 +339,7 @@ function Inbox() {
                         {working ? "Processing" : STATUS_LABEL[d.status] ?? d.status}
                       </Pill>
                     </Td>
-                    <Td title={shortDate(d.created_at)}>{relative(d.created_at)}</Td>
+                    <Td>{relative(d.created_at)}</Td>
                   </tr>
                 );
               })}
