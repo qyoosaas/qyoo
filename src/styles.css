@@ -12,6 +12,7 @@
 
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 
   --radius-sm: 3px;
@@ -73,14 +74,14 @@
 :root {
   --radius: 5px;
 
-  --background: oklch(0.974 0.002 106.42);
-  --foreground: oklch(0.185 0 0);
+  --background: oklch(0.977 0.003 95);
+  --foreground: oklch(0.205 0.026 268);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.185 0 0);
+  --card-foreground: oklch(0.205 0.026 268);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.185 0 0);
+  --popover-foreground: oklch(0.205 0.026 268);
 
-  --primary: oklch(0.185 0 0);
+  --primary: oklch(0.205 0.026 268);
   --primary-foreground: oklch(0.99 0 0);
   --secondary: oklch(0.955 0.003 106.42);
   --secondary-foreground: oklch(0.185 0 0);
@@ -99,9 +100,9 @@
   --surface: oklch(0.974 0.002 106.42);
   --surface-strong: oklch(0.938 0.004 106.42);
 
-  --signal: oklch(0.905 0.219 122.5);
-  --signal-foreground: oklch(0.185 0 0);
-  --signal-soft: oklch(0.97 0.09 122.5);
+  --signal: oklch(0.525 0.223 267.5);
+  --signal-foreground: oklch(0.99 0 0);
+  --signal-soft: oklch(0.955 0.035 267.5);
 
   --success: oklch(0.52 0.13 155);
   --success-soft: oklch(0.955 0.035 155);
@@ -113,7 +114,7 @@
   --chart-1: oklch(0.185 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.75 0 0);
-  --chart-4: oklch(0.905 0.219 122.5);
+  --chart-4: oklch(0.525 0.223 267.5);
   --chart-5: oklch(0.878 0.006 96);
 
   --sidebar: oklch(1 0 0);
@@ -143,7 +144,7 @@
   --accent-foreground: oklch(0.97 0 0);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.905 0.219 122.5);
+  --ring: oklch(0.525 0.223 267.5);
   --surface: oklch(0.21 0 0);
   --surface-strong: oklch(0.26 0 0);
   --sidebar: oklch(0.21 0 0);
@@ -173,6 +174,7 @@
   h2,
   h3,
   h4 {
+    font-family: var(--font-display);
     letter-spacing: -0.021em;
     font-weight: 560;
   }
@@ -208,4 +210,10 @@
 
 @utility row-hover {
   transition: background-color 120ms ease;
+}
+
+@utility brand-wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
