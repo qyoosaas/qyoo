@@ -402,16 +402,20 @@ function Review() {
             <Field label="Document type" className="w-[280px]">
               <NativeSelect
                 value={row.doc_type}
-                onChange={(e) => {
-                  const t = e.target.value;
+                onChange={(t) => {
                   pinType({ data: { id, docType: t } }).then(async () => {
                     await reprocess({ data: { id } });
                     qc.invalidateQueries({ queryKey: ["document_upload", id] });
                     qc.invalidateQueries({ queryKey: ["document_upload_events", id] });
                   });
                 }}
-                options={DOC_TYPES.map((t) => ({ value: t.id, label: t.label }))}
-              />
+              >
+                {DOC_TYPES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </NativeSelect>
             </Field>
             <p className="pb-2 text-xs text-muted-foreground">
               FIN will re-read the document with that type. No assumption is made on your behalf.
@@ -612,7 +616,7 @@ function Review() {
             <MatchRow
               label="Purchase order"
               value={matches.purchase_order ? `${matches.purchase_order.number} · ${money(matches.purchase_order.total)}` : "None referenced"}
-              to={matches.purchase_order ? `/purchases/${matches.purchase_order.id}` : undefined}
+              {...(matches.purchase_order ? { to: `/purchases/${matches.purchase_order.id}` } : {})}
             />
             <MatchRow
               label="Goods receipts"

@@ -56,7 +56,7 @@ abstract class RemoteProcessor implements DocumentProcessor {
 
     const res = await fetch(`${base}${this.endpoint()}`, {
       method: "POST",
-      headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      ...(token ? { headers: { authorization: `Bearer ${token}` } } : {}),
       body: form,
     });
     if (!res.ok) {

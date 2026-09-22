@@ -339,7 +339,7 @@ function Inbox() {
                         {working ? "Processing" : STATUS_LABEL[d.status] ?? d.status}
                       </Pill>
                     </Td>
-                    <Td title={shortDate(d.created_at)}>{relative(d.created_at)}</Td>
+                    <Td>{relative(d.created_at)}</Td>
                   </tr>
                 );
               })}
