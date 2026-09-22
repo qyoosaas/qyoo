@@ -1,15 +1,10 @@
 # Roadmap
 
-## In progress
-- [ ] Document Intelligence & Import Engine
-  - [x] Database: document_uploads, document_upload_events, documents storage bucket + policies
-  - [x] Provider abstraction (PaddleOCR / Docling remote service + heuristic fallback)
-  - [x] Extraction contract, document taxonomy, validation engine, confidence bands
-  - [x] Processing server functions (classify, extract, match, validate)
-  - [x] Document Inbox route + split-screen review route
-  - [ ] Navigation entry, typecheck, end-to-end verification
+## Done
+- [x] Document Intelligence & Import Engine (inbox, classification, extraction, validation, matching, review + approval)
+- [x] Qyoo rebrand: name, logo, icon/favicon, brand colours and typography
 
-## Queued
-- [ ] Rebrand FIN → Qyoo everywhere (app shell, page titles, meta, copy)
-  - [ ] Use uploaded Qyoo logo + icon
-  - [ ] Apply Qyoo brand colours (near-black #0F1525 ink, electric blue #3B4FE4 accent), ivory background, rounded geometric type feel
+## Open
+- [ ] Swap the local heuristic reader for the self-hosted PaddleOCR / PP-StructureV3 / Docling service (set DOC_AI_URL when it is running)
+- [ ] Real XLSX parsing in the local fallback reader
+- [ ] Remove leftover QA test data (bank lines "QA STATEMENT TEST", uploaded statement.csv) when the user confirms
