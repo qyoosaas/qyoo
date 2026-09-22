@@ -25,7 +25,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useExceptions } from "@/lib/fin-data";
 import { cn } from "@/lib/utils";
 import qyooLogo from "@/assets/qyoo-logo.png.asset.json";
-import qyooIcon from "@/assets/qyoo-icon.png.asset.json";
 import { CommandPalette } from "./command-palette";
 import {
   DropdownMenu,
@@ -89,9 +88,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col border-r border-border bg-sidebar lg:flex">
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border bg-white shadow-sm">
-            <img src={qyooIcon.url} alt="" className="h-5 w-5 object-contain" />
-          </span>
           <img src={qyooLogo.url} alt="Qyoo" className="h-[22px] w-auto" />
           <span className="label-xs ml-auto">OS</span>
         </div>

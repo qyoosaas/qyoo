@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import qyooLogo from "@/assets/qyoo-logo.png.asset.json";
-import qyooIcon from "@/assets/qyoo-icon.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,10 +73,7 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <div className="hidden flex-col justify-between border-r border-border bg-sidebar p-12 lg:flex">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border bg-white shadow-sm">
-            <img src={qyooIcon.url} alt="" className="h-6 w-6 object-contain" />
-          </span>
+        <div className="flex items-center gap-2.5">
           <img src={qyooLogo.url} alt="Qyoo" className="h-[26px] w-auto" />
         </div>
 
