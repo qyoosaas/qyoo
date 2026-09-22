@@ -84,7 +84,7 @@ export const processDocument = createServerFn({ method: "POST" })
         stage,
         detail: detail ?? null,
         payload: (payload ?? null) as never,
-        actor: "FIN Document Intelligence",
+        actor: "Qyoo Document Intelligence",
       });
     };
 

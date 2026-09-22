@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex h-6 w-6 items-center justify-center rounded-sm bg-primary">
             <span className="signal-dot" />
           </div>
-          <span className="text-[15px] font-semibold tracking-[-0.02em]">FIN</span>
+          <span className="text-[15px] font-semibold tracking-[-0.02em]">Qyoo</span>
           <span className="label-xs ml-auto">OS</span>
         </div>
 

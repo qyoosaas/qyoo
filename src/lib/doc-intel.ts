@@ -2,7 +2,7 @@
  * Document Intelligence — shared, provider-agnostic contracts.
  *
  * This module is deliberately free of any OCR/vendor detail. It defines what a
- * "understood document" looks like inside FIN: the taxonomy, the per-type field
+ * "understood document" looks like inside Qyoo: the taxonomy, the per-type field
  * schema, the deterministic validation engine and the confidence bands.
  * Processors (PaddleOCR / PP-StructureV3 / Docling / future) only have to emit
  * the `Extraction` shape below.
@@ -25,7 +25,7 @@ export type DocTypeDef = {
   id: string;
   label: string;
   group: DocGroup;
-  /** What approving this document creates in FIN. */
+  /** What approving this document creates in Qyoo. */
   workflow?: string;
   lines?: boolean;
   transactions?: boolean;
@@ -467,7 +467,7 @@ export function validateExtraction(e: Extraction | null | undefined): Validation
         code: `missing_${f.key}`,
         severity: "error",
         message: `${f.label} is missing`,
-        detail: "FIN never invents a missing value. Enter it before approving.",
+        detail: "Qyoo never invents a missing value. Enter it before approving.",
       });
     }
   }

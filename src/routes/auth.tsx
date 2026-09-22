@@ -9,13 +9,13 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in · FIN Autonomous Finance OS" },
+      { title: "Sign in · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Sign in to FIN, the autonomous finance operating system for manufacturing and distribution SMEs.",
+          "Sign in to Qyoo, the autonomous finance operating system for manufacturing and distribution SMEs.",
       },
-      { property: "og:title", content: "Sign in · FIN Autonomous Finance OS" },
+      { property: "og:title", content: "Sign in · Qyoo · Autonomous Finance OS" },
       { property: "og:description", content: "Finance happens automatically. People handle exceptions." },
     ],
   }),
@@ -76,7 +76,7 @@ function AuthPage() {
           <div className="flex h-6 w-6 items-center justify-center rounded-sm bg-primary">
             <span className="signal-dot" />
           </div>
-          <span className="text-[15px] font-semibold tracking-[-0.02em]">FIN</span>
+          <span className="text-[15px] font-semibold tracking-[-0.02em]">Qyoo</span>
         </div>
 
         <div className="max-w-[440px]">
@@ -86,7 +86,7 @@ function AuthPage() {
             <span className="text-muted-foreground">People handle exceptions.</span>
           </h1>
           <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-            FIN runs the finance function for manufacturing and distribution SMEs — invoices,
+            Qyoo runs the finance function for manufacturing and distribution SMEs — invoices,
             three-way matching, bank reconciliation, inventory costing and the general ledger post
             themselves. What lands on your desk is only what genuinely needs a decision.
           </p>
@@ -112,7 +112,7 @@ function AuthPage() {
       <div className="flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[360px]">
           <h2 className="text-[19px] font-medium tracking-tight">
-            {mode === "signin" ? "Sign in to FIN" : "Create your FIN account"}
+            {mode === "signin" ? "Sign in to Qyoo" : "Create your Qyoo account"}
           </h2>
           <p className="mt-1.5 text-sm text-muted-foreground">
             {mode === "signin"

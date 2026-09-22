@@ -24,13 +24,13 @@ import { ArrowLeft, Truck, ReceiptText, Pencil } from "lucide-react";
 export const Route = createFileRoute("/_app/sales_/$id")({
   head: () => ({
     meta: [
-      { title: "Sales order · FIN Autonomous Finance OS" },
+      { title: "Sales order · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Sales order detail with delivery notes, invoices raised, line-by-line delivered versus invoiced variance and full audit history.",
       },
-      { property: "og:title", content: "Sales order · FIN" },
+      { property: "og:title", content: "Sales order · Qyoo" },
       { property: "og:description", content: "Order, delivery and invoice matched line by line." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

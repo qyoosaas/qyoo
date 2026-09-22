@@ -40,13 +40,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_app/inbox_/$id")({
   head: () => ({
     meta: [
-      { title: "Document review · FIN Autonomous Finance OS" },
+      { title: "Document review · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Split-screen review: the original document beside the structured data FIN extracted, with field-level confidence, deterministic validation and the workflow it will create.",
+          "Split-screen review: the original document beside the structured data Qyoo extracted, with field-level confidence, deterministic validation and the workflow it will create.",
       },
-      { property: "og:title", content: "Document review · FIN" },
+      { property: "og:title", content: "Document review · Qyoo" },
       { property: "og:description", content: "Extraction is not approval." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -418,7 +418,7 @@ function Review() {
               </NativeSelect>
             </Field>
             <p className="pb-2 text-xs text-muted-foreground">
-              FIN will re-read the document with that type. No assumption is made on your behalf.
+              Qyoo will re-read the document with that type. No assumption is made on your behalf.
             </p>
           </div>
         </Panel>
@@ -609,7 +609,7 @@ function Review() {
           )}
         </Panel>
 
-        <Panel title="Matching" description="What this document connects to in FIN">
+        <Panel title="Matching" description="What this document connects to in Qyoo">
           <dl className="space-y-2 px-4 py-3.5 text-[13px]">
             <MatchRow label="Supplier" value={matches.supplier ? `${matches.supplier.name} (${matches.supplier.score}% name match)` : "Not found"} />
             <MatchRow label="Customer" value={matches.customer ? `${matches.customer.name} (${matches.customer.score}% name match)` : "Not applicable"} />
@@ -684,7 +684,7 @@ function Review() {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`Approve and create ${def?.workflow ?? "record"}?`}
-        description={`FIN will create the ${def?.workflow ?? "record"} from the approved data and post the matching accounting entries in one transaction. ${
+        description={`Qyoo will create the ${def?.workflow ?? "record"} from the approved data and post the matching accounting entries in one transaction. ${
           issues.some((i) => i.severity === "warning")
             ? "There are open warnings on this document — they will be recorded against the created transaction."
             : ""

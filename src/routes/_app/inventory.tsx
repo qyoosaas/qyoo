@@ -43,13 +43,13 @@ const PRODUCT_FIELDS: EntityField[] = [
 export const Route = createFileRoute("/_app/inventory")({
   head: () => ({
     meta: [
-      { title: "Inventory · FIN Autonomous Finance OS" },
+      { title: "Inventory · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Stock on hand, weighted-average cost and valuation by warehouse, with reorder alerts and a full movement ledger.",
       },
-      { property: "og:title", content: "Inventory · FIN" },
+      { property: "og:title", content: "Inventory · Qyoo" },
       { property: "og:description", content: "Perpetual inventory, always valued." },
     ],
   }),

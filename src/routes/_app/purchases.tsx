@@ -23,13 +23,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/purchases")({
   head: () => ({
     meta: [
-      { title: "Purchases · FIN Autonomous Finance OS" },
+      { title: "Purchases · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Purchase orders, goods receipts, supplier bills and payments with automatic three-way matching and tolerance-based exception handling.",
       },
-      { property: "og:title", content: "Purchases · FIN" },
+      { property: "og:title", content: "Purchases · Qyoo" },
       { property: "og:description", content: "Three-way matching that runs itself." },
     ],
   }),

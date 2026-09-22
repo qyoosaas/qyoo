@@ -467,7 +467,7 @@ export function PaymentDialog({
       extra={
         short > 0.005 ? (
           <span>
-            Short by {money(short)} — FIN absorbs it if within tolerance, otherwise raises an exception.
+            Short by {money(short)} — Qyoo absorbs it if within tolerance, otherwise raises an exception.
           </span>
         ) : null
       }
@@ -542,7 +542,7 @@ export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       open={open}
       onOpenChange={onOpenChange}
       title="Record expense"
-      description="Enter the amount paid including VAT. FIN splits the recoverable VAT, posts to the ledger and writes the bank line."
+      description="Enter the amount paid including VAT. Qyoo splits the recoverable VAT, posts to the ledger and writes the bank line."
       onSubmit={() => mut.mutate(undefined as never)}
       submitLabel="Record & post"
       busy={mut.isPending}

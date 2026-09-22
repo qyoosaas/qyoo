@@ -20,13 +20,13 @@ import { FileText } from "lucide-react";
 export const Route = createFileRoute("/_app/documents")({
   head: () => ({
     meta: [
-      { title: "Documents · FIN Autonomous Finance OS" },
+      { title: "Documents · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Every invoice, bill, receipt, statement and contract — captured, extracted and linked to its transaction automatically.",
       },
-      { property: "og:title", content: "Documents · FIN" },
+      { property: "og:title", content: "Documents · Qyoo" },
       { property: "og:description", content: "Paper in, ledger out." },
     ],
   }),
@@ -52,7 +52,7 @@ function Documents() {
       <PageHeader title="Documents" subtitle="Source of truth for every ledger entry" />
 
       <AutomationNote>
-        {all.length} documents ingested. FIN extracted supplier, amounts, VAT and references from{" "}
+        {all.length} documents ingested. Qyoo extracted supplier, amounts, VAT and references from{" "}
         {extracted} of them and linked each to its transaction. Drop new files here and they follow the
         same path.
       </AutomationNote>

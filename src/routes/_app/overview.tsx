@@ -20,13 +20,13 @@ import { RunAutomationButton } from "@/components/fin/automation-button";
 export const Route = createFileRoute("/_app/overview")({
   head: () => ({
     meta: [
-      { title: "Overview · FIN Autonomous Finance OS" },
+      { title: "Overview · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Live cash, receivables, payables, margin and automation health for Al Noor Manufacturing — plus the exceptions that need a human decision today.",
       },
-      { property: "og:title", content: "Overview · FIN Autonomous Finance OS" },
+      { property: "og:title", content: "Overview · Qyoo · Autonomous Finance OS" },
       { property: "og:description", content: "Finance happens automatically. People handle exceptions." },
     ],
   }),
@@ -112,7 +112,7 @@ function Overview() {
       />
 
       <AutomationNote>
-        <strong className="font-medium">FIN processed {total.toLocaleString()} bank lines, {(invoices.data ?? []).length} invoices and {(bills.data ?? []).length} supplier bills this year.</strong>{" "}
+        <strong className="font-medium">Qyoo processed {total.toLocaleString()} bank lines, {(invoices.data ?? []).length} invoices and {(bills.data ?? []).length} supplier bills this year.</strong>{" "}
         {autoRate.toFixed(1)}% posted to the ledger without a human touch. {open.length} items are
         waiting on a decision — {critical.length} critical.
       </AutomationNote>
@@ -260,7 +260,7 @@ function Overview() {
           </div>
         </Panel>
 
-        <Panel title="What FIN noticed" description="Rule-based analysis over your ledger">
+        <Panel title="What Qyoo noticed" description="Rule-based analysis over your ledger">
           <ul className="divide-y divide-border">
             {(insights.data ?? []).slice(0, 4).map((i: any) => (
               <li key={i.id} className="px-4 py-3">
@@ -289,7 +289,7 @@ function Overview() {
             <li key={a.id} className="flex items-center gap-3 px-4 py-2.5">
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: a.actor === "FIN" ? "var(--signal)" : "var(--muted-foreground)" }}
+                style={{ backgroundColor: a.actor === "Qyoo" ? "var(--signal)" : "var(--muted-foreground)" }}
               />
               <span className="w-[68px] shrink-0 text-[11px] text-muted-foreground">{a.actor}</span>
               <span className="min-w-0 flex-1 truncate text-[13px]">{a.title}</span>

@@ -25,13 +25,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/sales")({
   head: () => ({
     meta: [
-      { title: "Sales · FIN Autonomous Finance OS" },
+      { title: "Sales · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
           "Sales orders, invoices, receipts and receivables ageing for Al Noor Manufacturing — invoiced, posted and matched automatically.",
       },
-      { property: "og:title", content: "Sales · FIN" },
+      { property: "og:title", content: "Sales · Qyoo" },
       { property: "og:description", content: "Orders to cash, posted automatically." },
     ],
   }),

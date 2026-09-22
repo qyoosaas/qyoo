@@ -12,14 +12,14 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
     meta: [
-      { title: "Settings · FIN Autonomous Finance OS" },
+      { title: "Settings · Qyoo · Autonomous Finance OS" },
       {
         name: "description",
         content:
-          "Company profile, tolerances, automation thresholds, tax configuration and team roles for the FIN finance workspace.",
+          "Company profile, tolerances, automation thresholds, tax configuration and team roles for the Qyoo finance workspace.",
       },
-      { property: "og:title", content: "Settings · FIN" },
-      { property: "og:description", content: "Tune what FIN decides on its own." },
+      { property: "og:title", content: "Settings · Qyoo" },
+      { property: "og:description", content: "Tune what Qyoo decides on its own." },
     ],
   }),
   component: Settings,
@@ -64,10 +64,10 @@ function Settings() {
 
   return (
     <>
-      <PageHeader title="Settings" subtitle="Tolerances and thresholds decide what FIN handles alone" />
+      <PageHeader title="Settings" subtitle="Tolerances and thresholds decide what Qyoo handles alone" />
 
       <AutomationNote>
-        Lower a tolerance and more items reach Action Required. Raise it and FIN absorbs more
+        Lower a tolerance and more items reach Action Required. Raise it and Qyoo absorbs more
         variance silently. Every change is written to the audit log.
       </AutomationNote>
 

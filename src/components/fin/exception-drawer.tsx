@@ -98,7 +98,7 @@ export function ExceptionDrawer({
 
           <section className="rounded-sm border border-border bg-signal-soft/60 p-3.5">
             <div className="flex items-center justify-between">
-              <div className="label-xs">FIN recommends</div>
+              <div className="label-xs">Qyoo recommends</div>
               <Confidence value={exception.confidence} />
             </div>
             <p className="mt-1.5 text-[13px] leading-relaxed">{exception.recommendation}</p>
