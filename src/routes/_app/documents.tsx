@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { humanError, logTechnical } from "@/lib/fin-errors";
 
-export const Route = createFileRoute("/_app/inbox")({
+export const Route = createFileRoute("/_app/documents")({
   head: () => ({
     meta: [
       { title: "Document Inbox · Qyoo · Autonomous Finance OS" },

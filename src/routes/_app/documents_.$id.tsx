@@ -37,7 +37,7 @@ import { ConfirmDialog, Field, NativeSelect } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_app/inbox_/$id")({
+export const Route = createFileRoute("/_app/documents_/$id")({
   head: () => ({
     meta: [
       { title: "Document review · Qyoo · Autonomous Finance OS" },
