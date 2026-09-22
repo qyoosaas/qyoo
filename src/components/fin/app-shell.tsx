@@ -26,7 +26,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useExceptions } from "@/lib/fin-data";
 import { cn } from "@/lib/utils";
 import qyooLogo from "@/assets/qyoo-logo.png.asset.json";
-import qyooIcon from "@/assets/qyoo-icon.png.asset.json";
 import { CommandPalette } from "./command-palette";
 import {
   DropdownMenu,
