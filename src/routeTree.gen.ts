@@ -15,7 +15,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppAccountingRouteImport } from './routes/_app/accounting'
 import { Route as AppActionRequiredRouteImport } from './routes/_app/action-required'
 import { Route as AppBankingRouteImport } from './routes/_app/banking'
-import { Route as AppDocumentsRouteImport } from './routes/_app/documents'
 import { Route as AppExpensesRouteImport } from './routes/_app/expenses'
 import { Route as AppFpaRouteImport } from './routes/_app/fpa'
 import { Route as AppInboxRouteImport } from './routes/_app/inbox'
@@ -59,11 +58,6 @@ const AppActionRequiredRoute = AppActionRequiredRouteImport.update({
 const AppBankingRoute = AppBankingRouteImport.update({
   id: '/banking',
   path: '/banking',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDocumentsRoute = AppDocumentsRouteImport.update({
-  id: '/documents',
-  path: '/documents',
   getParentRoute: () => AppRoute,
 } as any)
 const AppExpensesRoute = AppExpensesRouteImport.update({
@@ -148,7 +142,6 @@ export interface FileRoutesByFullPath {
   '/accounting': typeof AppAccountingRoute
   '/action-required': typeof AppActionRequiredRoute
   '/banking': typeof AppBankingRoute
-  '/documents': typeof AppDocumentsRoute
   '/expenses': typeof AppExpensesRoute
   '/fpa': typeof AppFpaRoute
   '/inbox': typeof AppInboxRoute
@@ -171,7 +164,6 @@ export interface FileRoutesByTo {
   '/accounting': typeof AppAccountingRoute
   '/action-required': typeof AppActionRequiredRoute
   '/banking': typeof AppBankingRoute
-  '/documents': typeof AppDocumentsRoute
   '/expenses': typeof AppExpensesRoute
   '/fpa': typeof AppFpaRoute
   '/inbox': typeof AppInboxRoute
@@ -196,7 +188,6 @@ export interface FileRoutesById {
   '/_app/accounting': typeof AppAccountingRoute
   '/_app/action-required': typeof AppActionRequiredRoute
   '/_app/banking': typeof AppBankingRoute
-  '/_app/documents': typeof AppDocumentsRoute
   '/_app/expenses': typeof AppExpensesRoute
   '/_app/fpa': typeof AppFpaRoute
   '/_app/inbox': typeof AppInboxRoute
@@ -221,7 +212,6 @@ export interface FileRouteTypes {
     | '/accounting'
     | '/action-required'
     | '/banking'
-    | '/documents'
     | '/expenses'
     | '/fpa'
     | '/inbox'
@@ -244,7 +234,6 @@ export interface FileRouteTypes {
     | '/accounting'
     | '/action-required'
     | '/banking'
-    | '/documents'
     | '/expenses'
     | '/fpa'
     | '/inbox'
@@ -268,7 +257,6 @@ export interface FileRouteTypes {
     | '/_app/accounting'
     | '/_app/action-required'
     | '/_app/banking'
-    | '/_app/documents'
     | '/_app/expenses'
     | '/_app/fpa'
     | '/_app/inbox'
@@ -334,13 +322,6 @@ declare module '@tanstack/react-router' {
       path: '/banking'
       fullPath: '/banking'
       preLoaderRoute: typeof AppBankingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/documents': {
-      id: '/_app/documents'
-      path: '/documents'
-      fullPath: '/documents'
-      preLoaderRoute: typeof AppDocumentsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/expenses': {
@@ -455,7 +436,6 @@ interface AppRouteChildren {
   AppAccountingRoute: typeof AppAccountingRoute
   AppActionRequiredRoute: typeof AppActionRequiredRoute
   AppBankingRoute: typeof AppBankingRoute
-  AppDocumentsRoute: typeof AppDocumentsRoute
   AppExpensesRoute: typeof AppExpensesRoute
   AppFpaRoute: typeof AppFpaRoute
   AppInboxRoute: typeof AppInboxRoute
@@ -477,7 +457,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountingRoute: AppAccountingRoute,
   AppActionRequiredRoute: AppActionRequiredRoute,
   AppBankingRoute: AppBankingRoute,
-  AppDocumentsRoute: AppDocumentsRoute,
   AppExpensesRoute: AppExpensesRoute,
   AppFpaRoute: AppFpaRoute,
   AppInboxRoute: AppInboxRoute,
