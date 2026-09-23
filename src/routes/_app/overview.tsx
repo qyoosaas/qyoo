@@ -99,13 +99,12 @@ function Overview() {
         subtitle={`Al Noor Manufacturing LLC · position as at ${shortDate(TODAY)}`}
         actions={
           <>
-          <Link
-            to="/documents"
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-[13px] font-medium hover:bg-muted"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Upload document
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/documents">
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
+              Upload document
+            </Link>
+          </Button>
           <RunAutomationButton />
           <Link
             to="/action-required"
