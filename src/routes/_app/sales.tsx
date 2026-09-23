@@ -33,6 +33,8 @@ export const Route = createFileRoute("/_app/sales")({
       },
       { property: "og:title", content: "Sales · Qyoo" },
       { property: "og:description", content: "Orders to cash, posted automatically." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Sales,
