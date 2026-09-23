@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useTable, useExceptions } from "@/lib/fin-data";
 import { money, moneyShort, shortDate, relative, daysBetween, TODAY, titleCase } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 import { Metric, Panel, Pill, PageHeader, Loading, AutomationNote, Confidence } from "@/components/fin/primitives";
 import { ArrowRight, Upload } from "lucide-react";
 import { RunAutomationButton } from "@/components/fin/automation-button";
@@ -99,13 +100,12 @@ function Overview() {
         subtitle={`Al Noor Manufacturing LLC · position as at ${shortDate(TODAY)}`}
         actions={
           <>
-          <Link
-            to="/documents"
-            className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-3 py-1.5 text-[13px] font-medium hover:bg-muted"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Upload document
-          </Link>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/documents">
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
+              Upload document
+            </Link>
+          </Button>
           <RunAutomationButton />
           <Link
             to="/action-required"
