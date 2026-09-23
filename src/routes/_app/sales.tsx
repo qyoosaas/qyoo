@@ -40,6 +40,14 @@ export const Route = createFileRoute("/_app/sales")({
 
 const TABS = ["Invoices", "Orders", "Delivery notes", "Receipts", "Customers", "Ageing"] as const;
 
+const AGEING_BUCKETS = [
+  { label: "Current", min: -99999, max: 0 },
+  { label: "1–30 days", min: 1, max: 30 },
+  { label: "31–60 days", min: 31, max: 60 },
+  { label: "61–90 days", min: 61, max: 90 },
+  { label: "90+ days", min: 91, max: 99999 },
+];
+
 const CUSTOMER_FIELDS: EntityField[] = [
   { key: "name", label: "Name", span: 2, required: true },
   { key: "code", label: "Code" },
@@ -90,24 +98,41 @@ function Sales() {
   const ar = live.reduce((s: number, i: any) => s + Number(i.balance), 0);
   const overdue = live.filter((i: any) => Number(i.balance) > 0 && daysBetween(i.due_date, new Date()) > 0);
   const dso = revenue ? Math.round((ar / revenue) * 231) : 0;
+  const openInvoices = live.filter((i: any) => Number(i.balance) > 0);
 
   const ageing = useMemo(() => {
-    const buckets = [
-      { label: "Current", min: -9999, max: 0, total: 0 },
-      { label: "1–30 days", min: 1, max: 30, total: 0 },
-      { label: "31–60 days", min: 31, max: 60, total: 0 },
-      { label: "61–90 days", min: 61, max: 90, total: 0 },
-      { label: "90+ days", min: 91, max: 99999, total: 0 },
-    ];
-    live
-      .filter((i: any) => Number(i.balance) > 0)
-      .forEach((i: any) => {
-        const d = daysBetween(i.due_date, new Date());
-        const b = buckets.find((x) => d >= x.min && d <= x.max);
-        if (b) b.total += Number(i.balance);
-      });
-    return buckets;
-  }, [live]);
+    const rows = AGEING_BUCKETS.map((bucket) => ({ label: bucket.label, total: 0 }));
+    openInvoices.forEach((invoice: any) => {
+      const daysPastDue = daysBetween(invoice.due_date, new Date());
+      const bucketIndex = AGEING_BUCKETS.findIndex(
+        (bucket) => daysPastDue >= bucket.min && daysPastDue <= bucket.max,
+      );
+      const bucket = rows[bucketIndex];
+      if (bucket) bucket.total += Number(invoice.balance);
+    });
+    return rows;
+  }, [invoices.data]);
+
+  const byCustomer = useMemo(() => {
+    const rows = new Map<string, { id: string; name: string; buckets: number[]; total: number }>();
+    openInvoices.forEach((invoice: any) => {
+      const customerId = invoice.customer_id as string;
+      const current = rows.get(customerId) ?? {
+        id: customerId,
+        name: nameById.get(customerId) ?? "—",
+        buckets: [0, 0, 0, 0, 0],
+        total: 0,
+      };
+      const daysPastDue = daysBetween(invoice.due_date, new Date());
+      const bucketIndex = AGEING_BUCKETS.findIndex(
+        (bucket) => daysPastDue >= bucket.min && daysPastDue <= bucket.max,
+      );
+      if (bucketIndex >= 0) current.buckets[bucketIndex] = (current.buckets[bucketIndex] ?? 0) + Number(invoice.balance);
+      current.total += Number(invoice.balance);
+      rows.set(customerId, current);
+    });
+    return [...rows.values()].sort((a, b) => b.total - a.total);
+  }, [invoices.data, nameById]);
 
   const filter = (s: string) => s.toLowerCase().includes(term.toLowerCase());
 
@@ -408,7 +433,33 @@ function Sales() {
               </div>
             ))}
           </div>
-          {ar === 0 ? <EmptyState title="No open receivables" /> : null}
+          <TableShell>
+            <thead>
+              <tr>
+                <Th>Customer</Th>
+                <Th right>Current</Th>
+                <Th right>1–30 days</Th>
+                <Th right>31–60 days</Th>
+                <Th right>61–90 days</Th>
+                <Th right>90+ days</Th>
+                <Th right>Total</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {byCustomer.map((row) => (
+                <tr key={row.id} className="row-hover hover:bg-secondary/40">
+                  <Td>{row.name}</Td>
+                  {row.buckets.map((value, index) => (
+                    <Td key={index} right>{money(value)}</Td>
+                  ))}
+                  <Td right>
+                    <span className="font-medium">{money(row.total)}</span>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </TableShell>
+          {!byCustomer.length ? <EmptyState title="No open receivables" /> : null}
         </Panel>
       )}
 
