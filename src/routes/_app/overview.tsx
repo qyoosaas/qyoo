@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useTable, useExceptions } from "@/lib/fin-data";
 import { money, moneyShort, shortDate, relative, daysBetween, TODAY, titleCase } from "@/lib/format";
+import { Button } from "@/components/ui/button";
 import { Metric, Panel, Pill, PageHeader, Loading, AutomationNote, Confidence } from "@/components/fin/primitives";
 import { ArrowRight, Upload } from "lucide-react";
 import { RunAutomationButton } from "@/components/fin/automation-button";
