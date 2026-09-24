@@ -40,6 +40,20 @@ const PRODUCT_FIELDS: EntityField[] = [
   { key: "reorder_level", label: "Reorder level", type: "number" },
 ];
 
+const SKU_PREFIX: Record<string, string> = { raw_material: "RM", finished_good: "FG", service: "SV" };
+const SKU_START: Record<string, number> = { raw_material: 1001, finished_good: 4001, service: 9001 };
+
+/** Next SKU for a product type: highest existing number with that prefix + 1. */
+function nextSku(kind: string, products: any[]): string {
+  const prefix = SKU_PREFIX[kind] ?? "PR";
+  const re = new RegExp(`^${prefix}-(\\d+)$`, "i");
+  const max = products.reduce((m: number, p: any) => {
+    const hit = re.exec(String(p.sku ?? ""));
+    return hit ? Math.max(m, Number(hit[1])) : m;
+  }, 0);
+  return `${prefix}-${max ? max + 1 : (SKU_START[kind] ?? 1001)}`;
+}
+
 export const Route = createFileRoute("/_app/inventory")({
   head: () => ({
     meta: [
@@ -237,7 +251,17 @@ function Inventory() {
         </Panel>
       )}
 
-      <EntityDialog table="products" title="Product" fields={PRODUCT_FIELDS} row={prodRow} onOpenChange={(v) => !v && setProdRow(null)} />
+      <EntityDialog
+        table="products"
+        title="Product"
+        fields={PRODUCT_FIELDS}
+        row={prodRow}
+        onOpenChange={(v) => !v && setProdRow(null)}
+        derive={(next, key) => {
+          if (next['id'] || (key !== null && key !== "kind")) return {};
+          return { sku: nextSku(String(next['kind'] ?? "raw_material"), products.data ?? []) };
+        }}
+      />
       {delDialog}
     </>
   );
