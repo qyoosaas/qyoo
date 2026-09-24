@@ -618,17 +618,26 @@ export function EntityDialog({
   fields,
   row,
   onOpenChange,
+  derive,
 }: {
   table: string;
   title: string;
   fields: EntityField[];
   row: Record<string, any> | null | undefined; // null = closed, {} = new
   onOpenChange: (v: boolean) => void;
+  /** Optional: compute extra field values after a change (e.g. auto SKU). */
+  derive?: (next: Record<string, any>, changedKey: string | null) => Record<string, any>;
 }) {
   const [f, setF] = useState<Record<string, any>>({});
   useEffect(() => {
-    if (row) setF(row);
+    if (row) setF(derive ? { ...row, ...derive(row, null) } : row);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [row]);
+  const change = (key: string, v: any) =>
+    setF((s) => {
+      const next = { ...s, [key]: v };
+      return derive ? { ...next, ...derive(next, key) } : next;
+    });
   const mut = useAction(
     async () => {
       for (const fld of fields) if (fld.required && !String(f[fld.key] ?? "").trim()) throw new Error(`${fld.label} is required`);
@@ -648,7 +657,7 @@ export function EntityDialog({
         {fields.map((fld) => (
           <Field key={fld.key} label={fld.label} {...(fld.span === 2 ? { className: "sm:col-span-2" } : {})}>
             {fld.type === "select" ? (
-              <NativeSelect value={String(f[fld.key] ?? "")} onChange={(v) => setF((s) => ({ ...s, [fld.key]: v }))}>
+              <NativeSelect value={String(f[fld.key] ?? "")} onChange={(v) => change(fld.key, v)}>
                 {(fld.options ?? []).map((o) => (
                   <option key={o.value} value={o.value}>
                     {o.label}
@@ -660,7 +669,7 @@ export function EntityDialog({
                 type={fld.type === "number" ? "number" : "text"}
                 step="any"
                 value={f[fld.key] ?? ""}
-                onChange={(e) => setF((s) => ({ ...s, [fld.key]: e.target.value }))}
+                onChange={(e) => change(fld.key, e.target.value)}
                 className={cn("h-8 text-[13px]", fld.type === "number" && "num")}
               />
             )}

@@ -237,7 +237,17 @@ function Inventory() {
         </Panel>
       )}
 
-      <EntityDialog table="products" title="Product" fields={PRODUCT_FIELDS} row={prodRow} onOpenChange={(v) => !v && setProdRow(null)} />
+      <EntityDialog
+        table="products"
+        title="Product"
+        fields={PRODUCT_FIELDS}
+        row={prodRow}
+        onOpenChange={(v) => !v && setProdRow(null)}
+        derive={(next, key) => {
+          if (next['id'] || (key !== null && key !== "kind")) return {};
+          return { sku: nextSku(String(next['kind'] ?? "raw_material"), products.data ?? []) };
+        }}
+      />
       {delDialog}
     </>
   );
