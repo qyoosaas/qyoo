@@ -102,6 +102,7 @@ const CLASSIFIERS: { type: string; patterns: RegExp[] }[] = [
   { type: "goods_receipt", patterns: [/\bgrn\b/i, /goods[-_ ]?receipt/i, /receiv/i] },
   { type: "delivery_note", patterns: [/\bdn\b/i, /delivery[-_ ]?note/i, /dispatch/i] },
   { type: "expense_receipt", patterns: [/receipt/i, /expense/i, /taxi|hotel|fuel|meal/i] },
+  { type: "customer_credit_note", patterns: [/customer[-_ ]?credit/i, /sales[-_ ]?credit/i, /credit[-_ ]?note[\s\S]{0,200}(bill to|customer)/i] },
   { type: "supplier_credit_note", patterns: [/credit[-_ ]?note/i, /\bcn\b/i] },
   { type: "supplier_quotation", patterns: [/quotation/i, /\bquote\b/i, /\brfq\b/i] },
   { type: "invoice_generic", patterns: [/invoice/i] },
@@ -445,7 +446,7 @@ export class HeuristicProcessor implements DocumentProcessor {
         processor: this.id,
         processor_version: this.version,
         fields: {
-          bank_name: f(guessBank(input.fileName, text), 82),
+          bank_name: guessBank(input.fileName, text) ? f(guessBank(input.fileName, text), 82) : missing(),
           account_identifier: guessAccount(text) ? f(guessAccount(text), 78) : missing(),
           currency: f("AED", 90),
           period_from: f(first?.txn_date ?? null, first ? 94 : 0),
@@ -588,7 +589,7 @@ const round = (n: number) => Math.round(n * 100) / 100;
 function guessBank(fileName: string, text: string) {
   const hay = `${fileName} ${text.slice(0, 2000)}`;
   const m = hay.match(/(Emirates NBD|Mashreq|ADCB|FAB|RAKBANK|HSBC|Standard Chartered|Dubai Islamic)/i);
-  return m ? m[0] : "Bank";
+  return m ? m[0] : null;
 }
 function guessAccount(text: string) {
   const m = text.match(/AE\d{10,}/i) ?? text.match(/\b\d{9,}\b/);
