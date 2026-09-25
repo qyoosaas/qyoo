@@ -2739,6 +2739,10 @@ export type Database = {
         }
         Returns: Json
       }
+      approve_document: {
+        Args: { p_actor?: string; p_payload: Json; p_upload: string }
+        Returns: Json
+      }
       automation_selftest: { Args: never; Returns: Json }
       create_expense: {
         Args: {

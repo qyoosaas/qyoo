@@ -87,25 +87,6 @@ export class DoclingProcessor extends RemoteProcessor {
 /* In-process fallback                                                 */
 /* ------------------------------------------------------------------ */
 
-const hash = (s: string) => {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-};
-
-const rnd = (seed: number) => {
-  let s = seed || 1;
-  return () => {
-    s = (s * 1664525 + 1013904223) % 4294967296;
-    return s / 4294967296;
-  };
-};
-
-const conf = (r: () => number, min: number, max: number) => Math.round((min + r() * (max - min)) * 10) / 10;
-
 const f = (value: string | number | null, confidence: number, page = 1, bbox?: [number, number, number, number]) => ({
   value,
   confidence,
@@ -121,6 +102,7 @@ const CLASSIFIERS: { type: string; patterns: RegExp[] }[] = [
   { type: "goods_receipt", patterns: [/\bgrn\b/i, /goods[-_ ]?receipt/i, /receiv/i] },
   { type: "delivery_note", patterns: [/\bdn\b/i, /delivery[-_ ]?note/i, /dispatch/i] },
   { type: "expense_receipt", patterns: [/receipt/i, /expense/i, /taxi|hotel|fuel|meal/i] },
+  { type: "customer_credit_note", patterns: [/customer[-_ ]?credit/i, /sales[-_ ]?credit/i, /credit[-_ ]?note[\s\S]{0,200}(bill to|customer)/i] },
   { type: "supplier_credit_note", patterns: [/credit[-_ ]?note/i, /\bcn\b/i] },
   { type: "supplier_quotation", patterns: [/quotation/i, /\bquote\b/i, /\brfq\b/i] },
   { type: "invoice_generic", patterns: [/invoice/i] },
@@ -206,44 +188,271 @@ export function categorise(description: string) {
   return null;
 }
 
+/* ------------------------------------------------------------------ */
+/* File readers (Worker-safe, pure JS)                                 */
+/* ------------------------------------------------------------------ */
+
+const isXlsx = (input: ProcessInput) =>
+  /\.xlsx$/i.test(input.fileName) || /spreadsheetml/i.test(input.mimeType);
+const isPdf = (input: ProcessInput) => /\.pdf$/i.test(input.fileName) || /pdf/i.test(input.mimeType);
+const isImage = (input: ProcessInput) => /^image\//i.test(input.mimeType) || /\.(jpe?g|png|tiff?)$/i.test(input.fileName);
+
+const xmlDecode = (s: string) =>
+  s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+
+/** Read the first worksheet of an .xlsx workbook into rows of strings. */
+export async function readXlsx(bytes: Uint8Array): Promise<string[][]> {
+  const { unzipSync, strFromU8 } = await import("fflate");
+  const files = unzipSync(bytes);
+  const shared: string[] = [];
+  const ss = files["xl/sharedStrings.xml"];
+  if (ss) {
+    for (const m of strFromU8(ss).matchAll(/<si>([\s\S]*?)<\/si>/g)) {
+      shared.push(xmlDecode([...m[1]!.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((t) => t[1]).join("")));
+    }
+  }
+  const sheetKey = Object.keys(files).filter((k) => /^xl\/worksheets\/sheet\d+\.xml$/.test(k)).sort()[0];
+  if (!sheetKey) return [];
+  const xml = strFromU8(files[sheetKey]!);
+  const colIdx = (ref: string) => {
+    const letters = ref.replace(/\d+/g, "");
+    let n = 0;
+    for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64);
+    return n - 1;
+  };
+  const rows: string[][] = [];
+  for (const rm of xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+    const row: string[] = [];
+    for (const cm of rm[1]!.matchAll(/<c([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+      const attrs = cm[1] ?? "";
+      const body = cm[2] ?? "";
+      const ref = /r="([A-Z]+\d+)"/.exec(attrs)?.[1];
+      const t = /t="(\w+)"/.exec(attrs)?.[1];
+      let v = /<v>([\s\S]*?)<\/v>/.exec(body)?.[1] ?? "";
+      if (t === "s") v = shared[Number(v)] ?? "";
+      else if (t === "inlineStr") v = [...body.matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join("");
+      const i = ref ? colIdx(ref) : row.length;
+      row[i] = xmlDecode(v).trim();
+    }
+    if (row.some((c) => c)) rows.push(Array.from(row, (c) => c ?? ""));
+  }
+  return rows;
+}
+
+/** Excel stores dates as day serials. Convert columns whose header says "date". */
+function fixExcelDates(table: { header: string[]; rows: string[][] }) {
+  table.header.forEach((h, i) => {
+    if (!/date/.test(h)) return;
+    for (const r of table.rows) {
+      const n = Number(r[i]);
+      if (r[i] && Number.isFinite(n) && n > 20000 && n < 80000) {
+        r[i] = new Date(Date.UTC(1899, 11, 30) + n * 86400000).toISOString().slice(0, 10);
+      }
+    }
+  });
+  return table;
+}
+
+/** Text layer of a born-digital PDF. Scans have no text layer and return "". */
+async function readPdfText(bytes: Uint8Array): Promise<{ text: string; pages: number }> {
+  try {
+    const { extractText, getDocumentProxy } = await import("unpdf");
+    const pdf = await getDocumentProxy(new Uint8Array(bytes));
+    const { totalPages, text } = await extractText(pdf, { mergePages: false });
+    return { text: (text as string[]).join("\n"), pages: totalPages };
+  } catch {
+    return { text: "", pages: 1 };
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Text → fields (deterministic, never invents values)                 */
+/* ------------------------------------------------------------------ */
+
+const MONTHS: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+const DATE_RE = /(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}|\d{1,2}[\s\-](?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s\-,]+\d{4})/i;
+
+export function toIsoDate(raw: string): string | null {
+  const s = raw.trim();
+  let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (m) return s;
+  m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/.exec(s);
+  if (m) {
+    const y = m[3]!.length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    const d = Number(m[1]); // UAE convention: day first
+    const mo = Number(m[2]);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+  m = /^(\d{1,2})[\s\-]([a-z]{3})[a-z]*[\s\-,]+(\d{4})$/i.exec(s);
+  if (m && MONTHS[m[2]!.toLowerCase()]) {
+    return `${m[3]}-${String(MONTHS[m[2]!.toLowerCase()]).padStart(2, "0")}-${String(Number(m[1])).padStart(2, "0")}`;
+  }
+  return null;
+}
+
+const money = (s: string) => Number(s.replace(/,/g, ""));
+const AMT = "([\\d,]+\\.\\d{2})";
+
+function labelled(text: string, labels: string, valueRe: string, flags = "i") {
+  const re = new RegExp(`(?:${labels})[^\\n\\d]{0,30}?${valueRe}`, flags);
+  return re.exec(text)?.[1] ?? null;
+}
+
+function labelledDate(text: string, labels: string) {
+  const re = new RegExp(`(?:${labels})[^\\n]{0,25}?${DATE_RE.source}`, "i");
+  const hit = re.exec(text)?.[1];
+  return hit ? toIsoDate(hit) : null;
+}
+
+function lastAmount(text: string, labels: string, exclude?: RegExp) {
+  let out: number | null = null;
+  const re = new RegExp(`^.*(?:${labels}).*$`, "gim");
+  for (const m of text.matchAll(re)) {
+    if (exclude?.test(m[0])) continue;
+    const nums = [...m[0].matchAll(new RegExp(AMT, "g"))];
+    if (nums.length) out = money(nums[nums.length - 1]![1]!);
+  }
+  return out;
+}
+
+/** Table-like text lines: description, qty, unit price, (vat%), line total. */
+function linesFromText(text: string): ExtractedLine[] {
+  const out: ExtractedLine[] = [];
+  const re = /^\s*(?:(\d{1,3})[.)]?\s+)?(?:([A-Z]{2,4}-\d{3,6})\s+)?(.{3,80}?)\s+(\d+(?:\.\d+)?)\s+(?:[A-Za-z]{1,6}\s+)?([\d,]+\.\d{2})\s+(?:(\d{1,2}(?:\.\d+)?)\s*%\s+)?(?:[\d,]+\.\d{2}\s+)?([\d,]+\.\d{2})\s*$/;
+  for (const raw of text.split(/\n/)) {
+    const m = re.exec(raw);
+    if (!m) continue;
+    const qty = Number(m[4]);
+    const price = money(m[5]!);
+    const total = money(m[7]!);
+    if (/total|vat|subtotal|balance/i.test(m[3]!)) continue;
+    const ok = Math.abs(qty * price - total) < 0.05 || Math.abs(qty * price * 1.05 - total) < 0.05;
+    if (!ok || !qty) continue;
+    const net = Math.abs(qty * price - total) < 0.05 ? total : round(qty * price);
+    const vatRate = m[6] ? Number(m[6]) : 5;
+    out.push({
+      sku: m[2] ?? null,
+      description: m[3]!.trim(),
+      quantity: qty,
+      unit_price: price,
+      discount: 0,
+      vat_rate: vatRate,
+      vat_amount: round(net * (vatRate / 100)),
+      line_total: net,
+      quantity_ordered: qty,
+      quantity_received: qty,
+      confidence: 88,
+    });
+  }
+  return out;
+}
+
+/** Line items from a spreadsheet/CSV item table. */
+function linesFromTable(table: { header: string[]; rows: string[][] }): ExtractedLine[] {
+  const idx = (names: string[]) => table.header.findIndex((h) => names.some((n) => h.includes(n)));
+  const iDesc = idx(["description", "item", "product", "particular", "name"]);
+  const iSku = idx(["sku", "code", "part"]);
+  const iQty = idx(["qty", "quantity"]);
+  const iPrice = idx(["price", "rate", "unit cost"]);
+  const iVat = idx(["vat %", "vat rate", "tax %"]);
+  const iTot = idx(["amount", "total", "value"]);
+  if (iQty < 0 || (iPrice < 0 && iTot < 0)) return [];
+  return table.rows
+    .map((r) => {
+      const qty = numOf(r[iQty]);
+      const total = iTot >= 0 ? numOf(r[iTot]) : 0;
+      const price = iPrice >= 0 ? numOf(r[iPrice]) : qty ? total / qty : 0;
+      const net = total || round(qty * price);
+      const vat = iVat >= 0 ? numOf(r[iVat]) : 5;
+      return {
+        sku: iSku >= 0 ? r[iSku] || null : null,
+        description: (iDesc >= 0 ? r[iDesc] : "") || "Item",
+        quantity: qty,
+        unit_price: round(price),
+        discount: 0,
+        vat_rate: vat,
+        vat_amount: round(net * (vat / 100)),
+        line_total: net,
+        quantity_ordered: qty,
+        quantity_received: qty,
+        confidence: 97,
+      } satisfies ExtractedLine;
+    })
+    .filter((l) => l.quantity > 0 && !/^(sub)?total/i.test(l.description));
+}
+
+function findParty(text: string, candidates: string[]) {
+  const low = text.toLowerCase();
+  const hit = candidates.find((c) => c && low.includes(c.toLowerCase()));
+  if (hit) return { value: hit, confidence: 92 };
+  const labelled = /(?:supplier|vendor|from|bill to|customer|sold to|merchant)\s*[:\-]\s*([^\n]{3,60})/i.exec(text)?.[1];
+  if (labelled) return { value: labelled.trim(), confidence: 72 };
+  return null;
+}
+
+const missing = () => ({ value: null, confidence: 0 });
+
 /**
- * Fallback processor. Real table data (CSV/XLSX/TSV) is parsed for real; for
- * image/PDF input without a configured OCR service it produces a structured,
- * clearly-flagged extraction so the downstream workflow can be exercised.
- * It emits exactly the same contract as the PaddleOCR service.
+ * Local fallback reader. Everything it returns is read from the file itself:
+ * CSV/TSV/XLSX tables are parsed; born-digital PDFs are read from their text
+ * layer. Scans and photos need the self-hosted OCR service — until it is
+ * connected they come back with empty fields for manual entry. Nothing is
+ * ever made up.
  */
 export class HeuristicProcessor implements DocumentProcessor {
-  readonly id = "heuristic";
-  readonly version = "1.0";
+  readonly id = "local-reader";
+  readonly version = "2.0";
   available() {
     return true;
   }
 
   async process(input: ProcessInput): Promise<Extraction> {
-    const isText = /csv|tsv|text|excel|spreadsheet|sheet/i.test(input.mimeType) || /\.(csv|tsv|txt)$/i.test(input.fileName);
-    const text = isText ? new TextDecoder().decode(input.bytes.slice(0, 500_000)) : "";
-    const table = isText ? parseDelimited(text) : null;
-    const cls = classify(input.fileName, text);
-    const r = rnd(hash(input.fileName + input.bytes.length));
+    let text = "";
+    let table: { header: string[]; rows: string[][] } | null = null;
+    let pages = 1;
+    let note: string | undefined;
 
-    // Real parse path: a delimited bank statement.
+    if (isXlsx(input)) {
+      const rows = await readXlsx(input.bytes);
+      if (rows.length >= 2) {
+        table = fixExcelDates({ header: rows[0]!.map((h) => h.toLowerCase()), rows: rows.slice(1) });
+      }
+      text = rows.map((r) => r.join("\t")).join("\n");
+    } else if (/csv|tsv|text\//i.test(input.mimeType) || /\.(csv|tsv|txt)$/i.test(input.fileName)) {
+      text = new TextDecoder().decode(input.bytes.slice(0, 500_000));
+      table = parseDelimited(text);
+    } else if (isPdf(input)) {
+      const r = await readPdfText(input.bytes);
+      text = r.text;
+      pages = r.pages;
+      if (!text.trim()) note = "This PDF is a scan with no text layer. Connect the OCR service or enter the fields manually.";
+    } else if (isImage(input)) {
+      note = "Photos and scans need the self-hosted OCR service. Enter the fields manually for now.";
+    } else if (/\.xls$/i.test(input.fileName)) {
+      note = "Old .xls workbooks can't be read. Save the file as .xlsx or CSV and upload it again.";
+    }
+
+    const cls = classify(input.fileName, text);
+
     if (table && (cls.type === "bank_statement" || table.header.some((h) => /balance|debit|credit/.test(h)))) {
       const txns = statementFromTable(table);
-      const opening = txns.length ? Number((txns[0]!.balance ?? 0) - (txns[0]!.direction === "in" ? txns[0]!.amount : -txns[0]!.amount)) : 0;
-      const closing = txns.length ? Number(txns[txns.length - 1]!.balance ?? 0) : 0;
+      const first = txns[0];
+      const last = txns[txns.length - 1];
+      const opening = first && first.balance != null ? first.balance - (first.direction === "in" ? first.amount : -first.amount) : null;
       return {
         doc_type: "bank_statement",
         doc_type_confidence: 96,
         processor: this.id,
         processor_version: this.version,
         fields: {
-          bank_name: f(guessBank(input.fileName, text), 82),
-          account_identifier: f(guessAccount(text), 78),
-          currency: f("AED", 95),
-          period_from: f(txns[0]?.txn_date ?? null, 94),
-          period_to: f(txns[txns.length - 1]?.txn_date ?? null, 94),
-          opening_balance: f(round(opening), txns[0]?.balance != null ? 93 : 60),
-          closing_balance: f(round(closing), txns.length && txns[txns.length - 1]?.balance != null ? 95 : 60),
+          bank_name: guessBank(input.fileName, text) ? f(guessBank(input.fileName, text), 82) : missing(),
+          account_identifier: guessAccount(text) ? f(guessAccount(text), 78) : missing(),
+          currency: f("AED", 90),
+          period_from: f(first?.txn_date ?? null, first ? 94 : 0),
+          period_to: f(last?.txn_date ?? null, last ? 94 : 0),
+          opening_balance: opening != null ? f(round(opening), 93) : missing(),
+          closing_balance: last?.balance != null ? f(round(last.balance), 95) : missing(),
         },
         transactions: txns,
         page_count: 1,
@@ -251,172 +460,136 @@ export class HeuristicProcessor implements DocumentProcessor {
       };
     }
 
-    const type = cls.type === "unknown" ? "unknown" : cls.type;
-    return this.structured(type, cls.confidence, input, r);
+    const type = cls.type;
+    const lines = table ? linesFromTable(table) : text ? linesFromText(text) : [];
+    return {
+      doc_type: type,
+      doc_type_confidence: cls.confidence,
+      processor: this.id,
+      processor_version: this.version,
+      fields: this.fieldsFromText(type, text, lines, input),
+      lines,
+      page_count: pages,
+      raw_text: (note ? `[${note}]\n` : "") + text.slice(0, 20000),
+    };
   }
 
-  private structured(type: string, typeConf: number, input: ProcessInput, r: () => number): Extraction {
-    const supplier = pick(input.hints?.suppliers ?? [], r) ?? "Unrecognised Supplier";
-    const customer = pick(input.hints?.customers ?? [], r) ?? "Unrecognised Customer";
-    const date = new Date(Date.now() - Math.floor(r() * 30) * 86400000).toISOString().slice(0, 10);
-    const due = new Date(new Date(date).getTime() + 30 * 86400000).toISOString().slice(0, 10);
-    const lines: ExtractedLine[] = Array.from({ length: 2 + Math.floor(r() * 2) }, (_, i) => {
-      const qty = Math.round((2 + r() * 20) * 10) / 10;
-      const price = Math.round((40 + r() * 600) * 100) / 100;
-      const total = round(qty * price);
-      return {
-        sku: `SKU-${1000 + Math.floor(r() * 8999)}`,
-        description: LINE_WORDS[Math.floor(r() * LINE_WORDS.length)] ?? `Item ${i + 1}`,
-        quantity: qty,
-        unit: "pcs",
-        unit_price: price,
-        discount: 0,
-        vat_rate: 5,
-        vat_amount: round(total * 0.05),
-        line_total: total,
-        quantity_ordered: qty,
-        quantity_received: qty,
-        confidence: conf(r, 80, 98),
-      };
-    });
-    const subtotal = round(lines.reduce((s, l) => s + l.line_total, 0));
-    const vat = round(subtotal * 0.05);
-    const total = round(subtotal + vat);
-    const seq = 1000 + Math.floor(r() * 8999);
+  private fieldsFromText(type: string, text: string, lines: ExtractedLine[], input: ProcessInput) {
+    const out: Record<string, ReturnType<typeof f> | { value: null; confidence: number }> = {};
+    const put = (k: string, v: string | number | null, c: number) => {
+      out[k] = v == null || v === "" ? missing() : f(v, c);
+    };
+    const docNo = (labels: string) => labelled(text, labels, "([A-Z0-9][A-Z0-9\\-\\/]{2,})");
+    const trn = /\b(1\d{14})\b/.exec(text)?.[1] ?? null;
 
-    const base: Record<string, ReturnType<typeof f>> = {
-      currency: f("AED", 97),
-      subtotal: f(subtotal, conf(r, 90, 99)),
-      discount: f(0, 95),
-      vat_rate: f(5, conf(r, 88, 99)),
-      vat_amount: f(vat, conf(r, 86, 99)),
-      total: f(total, conf(r, 92, 99), 1, [0.62, 0.74, 0.3, 0.04]),
+    let subtotal = lastAmount(text, "sub\\s*-?\\s*total|net amount|taxable amount");
+    let vat = lastAmount(text, "vat|tax amount", /vat\s*(no|reg|trn|number)|trn/i);
+    let total = lastAmount(text, "grand total|total amount|amount due|total due|total payable|net payable|^\\s*total", /sub\s*-?\s*total/i);
+    const lineSum = round(lines.reduce((s, l) => s + l.line_total, 0));
+    let derived = false;
+    if (subtotal == null && lineSum) (subtotal = lineSum), (derived = true);
+    if (total == null && subtotal != null && vat != null) (total = round(subtotal + vat)), (derived = true);
+    if (vat == null && total != null && subtotal != null) (vat = round(total - subtotal)), (derived = true);
+    if (subtotal == null && total != null && vat != null) (subtotal = round(total - vat)), (derived = true);
+    const amtConf = derived ? 70 : 86;
+
+    const withTotals = () => {
+      put("currency", /\b(USD|EUR|GBP|SAR)\b/.exec(text)?.[1] ?? "AED", /\bAED\b/.test(text) ? 95 : 60);
+      put("subtotal", subtotal, amtConf);
+      put("discount", lastAmount(text, "discount") ?? 0, 70);
+      put("vat_rate", vat != null && subtotal ? Math.round((vat / subtotal) * 100) : null, 80);
+      put("vat_amount", vat, amtConf);
+      put("total", total, amtConf);
+    };
+
+    const suppliers = input.hints?.suppliers ?? [];
+    const customers = input.hints?.customers ?? [];
+    const partyField = (key: string, list: string[]) => {
+      const p = findParty(text, list);
+      put(key, p?.value ?? null, p?.confidence ?? 0);
+      put(`${key}_trn`, trn, trn ? 85 : 0);
     };
 
     switch (type) {
       case "supplier_invoice":
-      case "supplier_credit_note":
-        return this.wrap(type, typeConf, {
-          supplier_name: f(supplier, conf(r, 84, 98), 1, [0.06, 0.08, 0.4, 0.05]),
-          supplier_name_trn: f(`1000${seq}00003`, conf(r, 78, 95)),
-          supplier_name_address: f("Industrial Area 4, Sharjah, UAE", conf(r, 72, 90)),
-          [type === "supplier_invoice" ? "invoice_number" : "credit_note_number"]: f(
-            `${type === "supplier_invoice" ? "SI" : "SCN"}-${seq}`,
-            conf(r, 93, 99),
-            1,
-            [0.62, 0.12, 0.28, 0.04],
-          ),
-          [type === "supplier_invoice" ? "invoice_date" : "credit_note_date"]: f(date, conf(r, 90, 99)),
-          due_date: f(due, conf(r, 80, 96)),
-          po_number: f(r() > 0.35 ? `PO-${50000 + Math.floor(r() * 900)}` : null, conf(r, 70, 96)),
-          payment_terms: f("Net 30", conf(r, 75, 94)),
-          ...base,
-        }, lines);
+        partyField("supplier_name", suppliers);
+        put("invoice_number", docNo("tax invoice\\s*(?:no|number|#)|invoice\\s*(?:no|number|#)|inv\\s*(?:no|#)|bill\\s*(?:no|number)"), 86);
+        put("invoice_date", labelledDate(text, "invoice date|date of issue|\\bdate\\b"), 84);
+        put("due_date", labelledDate(text, "due date|payment due"), 82);
+        put("po_number", /\b(PO-\d{4,6})\b/i.exec(text)?.[1]?.toUpperCase() ?? null, 90);
+        withTotals();
+        break;
       case "customer_invoice":
-        return this.wrap(type, typeConf, {
-          customer_name: f(customer, conf(r, 84, 98)),
-          customer_name_trn: f(`1000${seq}00001`, conf(r, 76, 94)),
-          invoice_number: f(`INV-${seq}`, conf(r, 92, 99)),
-          invoice_date: f(date, conf(r, 90, 99)),
-          due_date: f(due, conf(r, 82, 97)),
-          payment_terms: f("Net 30", conf(r, 74, 93)),
-          ...base,
-        }, lines);
+        partyField("customer_name", customers);
+        put("invoice_number", docNo("tax invoice\\s*(?:no|number|#)|invoice\\s*(?:no|number|#)|inv\\s*(?:no|#)"), 86);
+        put("invoice_date", labelledDate(text, "invoice date|date of issue|\\bdate\\b"), 84);
+        put("due_date", labelledDate(text, "due date|payment due"), 82);
+        withTotals();
+        break;
       case "purchase_order":
       case "supplier_quotation":
-        return this.wrap(type, typeConf, {
-          supplier_name: f(supplier, conf(r, 84, 98)),
-          supplier_name_trn: f(`1000${seq}00003`, conf(r, 74, 94)),
-          [type === "purchase_order" ? "po_number" : "quotation_number"]: f(`${type === "purchase_order" ? "PO" : "QT"}-${seq}`, conf(r, 92, 99)),
-          [type === "purchase_order" ? "po_date" : "quotation_date"]: f(date, conf(r, 90, 99)),
-          delivery_date: f(due, conf(r, 76, 94)),
-          payment_terms: f("Net 30", conf(r, 74, 93)),
-          buyer: f("Ahmed Rahman", conf(r, 70, 92)),
-          delivery_address: f("Al Quoz Industrial 3, Dubai, UAE", conf(r, 70, 90)),
-          ...base,
-        }, lines);
+        partyField("supplier_name", suppliers);
+        if (type === "purchase_order") {
+          put("po_number", docNo("p\\.?o\\.?\\s*(?:no|number|#)|purchase order\\s*(?:no|number|#)?"), 86);
+          put("po_date", labelledDate(text, "po date|order date|\\bdate\\b"), 84);
+        } else {
+          put("quotation_number", docNo("quotation\\s*(?:no|number|#)|quote\\s*(?:no|#)"), 86);
+          put("quotation_date", labelledDate(text, "quotation date|\\bdate\\b"), 84);
+        }
+        put("delivery_date", labelledDate(text, "delivery date|required by|expected"), 78);
+        withTotals();
+        break;
+      case "customer_quotation":
+      case "sales_order":
+        partyField("customer_name", customers);
+        put(type === "sales_order" ? "so_number" : "quotation_number", docNo("order\\s*(?:no|number|#)|quotation\\s*(?:no|number|#)|quote\\s*(?:no|#)"), 84);
+        put(type === "sales_order" ? "order_date" : "quotation_date", labelledDate(text, "\\bdate\\b"), 82);
+        withTotals();
+        break;
       case "goods_receipt":
-      case "delivery_note": {
-        const isGrn = type === "goods_receipt";
-        const recvLines = lines.map((l) => ({
-          ...l,
-          quantity_received: r() > 0.7 ? Math.max(1, Math.round(l.quantity * 0.6)) : l.quantity,
-        }));
-        return this.wrap(type, typeConf, isGrn
-          ? {
-              grn_number: f(`GRN-${seq}`, conf(r, 90, 99)),
-              grn_date: f(date, conf(r, 90, 99)),
-              supplier_name: f(supplier, conf(r, 84, 98)),
-              po_number: f(`PO-${50000 + Math.floor(r() * 900)}`, conf(r, 78, 97)),
-              warehouse: f("Main Warehouse", conf(r, 76, 94)),
-              delivery_reference: f(`DLV-${seq}`, conf(r, 70, 92)),
-            }
-          : {
-              delivery_number: f(`DN-${seq}`, conf(r, 90, 99)),
-              delivery_date: f(date, conf(r, 90, 99)),
-              customer_name: f(customer, conf(r, 84, 98)),
-              so_number: f(`SO-${20000 + Math.floor(r() * 900)}`, conf(r, 76, 96)),
-              warehouse: f("Main Warehouse", conf(r, 74, 93)),
-            }, recvLines);
-      }
-      case "expense_receipt": {
-        const t = round(30 + r() * 900);
-        const sub = round(t / 1.05);
-        return this.wrap(type, typeConf, {
-          merchant: f(MERCHANTS[Math.floor(r() * MERCHANTS.length)]!, conf(r, 82, 98)),
-          receipt_date: f(date, conf(r, 88, 99)),
-          receipt_number: f(`R-${seq}`, conf(r, 70, 94)),
-          currency: f("AED", 97),
-          subtotal: f(sub, conf(r, 80, 96)),
-          vat_amount: f(round(t - sub), conf(r, 74, 95)),
-          total: f(t, conf(r, 90, 99)),
-          payment_method: f("company_card", conf(r, 72, 92)),
-          employee: f("Ahmed Rahman", conf(r, 66, 90)),
-          category: f(null, 40),
-        }, []);
-      }
+        put("grn_number", docNo("grn\\s*(?:no|number|#)?|goods receipt\\s*(?:no|number|#)?"), 84);
+        put("grn_date", labelledDate(text, "received on|receipt date|\\bdate\\b"), 82);
+        put("supplier_name", findParty(text, suppliers)?.value ?? null, 80);
+        put("po_number", /\b(PO-\d{4,6})\b/i.exec(text)?.[1]?.toUpperCase() ?? null, 90);
+        break;
+      case "delivery_note":
+        put("delivery_number", docNo("delivery note\\s*(?:no|number|#)?|d\\.?n\\.?\\s*(?:no|#)"), 84);
+        put("delivery_date", labelledDate(text, "delivery date|\\bdate\\b"), 82);
+        put("customer_name", findParty(text, customers)?.value ?? null, 80);
+        put("so_number", /\b(SO-\d{4,6})\b/i.exec(text)?.[1]?.toUpperCase() ?? null, 90);
+        break;
+      case "supplier_credit_note":
+      case "customer_credit_note":
+        partyField(type === "supplier_credit_note" ? "supplier_name" : "customer_name", type === "supplier_credit_note" ? suppliers : customers);
+        put("credit_note_number", docNo("credit note\\s*(?:no|number|#)?|c\\.?n\\.?\\s*(?:no|#)"), 84);
+        put("credit_note_date", labelledDate(text, "\\bdate\\b"), 82);
+        put("reference_invoice", docNo("against invoice|ref(?:erence)? invoice|original invoice|invoice\\s*(?:no|#)"), 78);
+        put("reason", /reason\s*[:\-]\s*([^\n]{3,80})/i.exec(text)?.[1] ?? null, 70);
+        withTotals();
+        break;
+      case "expense_receipt":
+        put("merchant", text.split(/\n/).map((s) => s.trim()).find((s) => /[a-z]{3}/i.test(s)) ?? null, 60);
+        put("receipt_date", labelledDate(text, "\\bdate\\b") ?? (DATE_RE.exec(text)?.[1] ? toIsoDate(DATE_RE.exec(text)![1]!) : null), 78);
+        put("receipt_number", docNo("receipt\\s*(?:no|number|#)|bill\\s*(?:no|#)|trx\\s*(?:no|#)"), 75);
+        put("currency", "AED", 80);
+        put("subtotal", subtotal, amtConf);
+        put("vat_amount", vat, amtConf);
+        put("total", total, amtConf);
+        put("payment_method", /cash/i.test(text) ? "cash" : /card|visa|master/i.test(text) ? "company_card" : null, 70);
+        break;
       default:
-        return this.wrap("unknown", typeConf, {}, []);
+        break;
     }
-  }
-
-  private wrap(
-    docType: string,
-    docConf: number,
-    fields: Record<string, ReturnType<typeof f>>,
-    lines: ExtractedLine[],
-  ): Extraction {
-    return {
-      doc_type: docType,
-      doc_type_confidence: docConf,
-      processor: this.id,
-      processor_version: this.version,
-      fields,
-      lines,
-      page_count: 1,
-    };
+    return out as Extraction["fields"];
   }
 }
 
-const LINE_WORDS = [
-  "Hot Rolled Steel Coil 2mm",
-  "Aluminium Profile 40x40",
-  "Powder Coating Service",
-  "Stainless Fasteners M8",
-  "Packing & Crating",
-  "Freight — Jebel Ali",
-  "Oak Panel 18mm",
-  "Plywood Sheet 12mm",
-];
-const MERCHANTS = ["Emarat Fuel Station", "Careem", "Jumeirah Hotels", "ADNOC Distribution", "Noon Business", "Etisalat"];
-
 const round = (n: number) => Math.round(n * 100) / 100;
-const pick = <T,>(arr: T[], r: () => number) => (arr.length ? arr[Math.floor(r() * arr.length)] : undefined);
 
 function guessBank(fileName: string, text: string) {
   const hay = `${fileName} ${text.slice(0, 2000)}`;
   const m = hay.match(/(Emirates NBD|Mashreq|ADCB|FAB|RAKBANK|HSBC|Standard Chartered|Dubai Islamic)/i);
-  return m ? m[0] : "Bank";
+  return m ? m[0] : null;
 }
 function guessAccount(text: string) {
   const m = text.match(/AE\d{10,}/i) ?? text.match(/\b\d{9,}\b/);

@@ -372,6 +372,9 @@ export type ExtractedLine = {
   quantity_ordered?: number;
   quantity_received?: number;
   batch?: string | null;
+  /** Linked Qyoo product, set by matching or by the reviewer. */
+  product_id?: string | null;
+  product_match?: number | null;
   confidence: number;
 };
 
