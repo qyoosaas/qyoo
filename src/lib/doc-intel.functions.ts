@@ -36,6 +36,8 @@ type MatchResult = {
   }[];
   duplicate?: { id: string; label: string; reason: string } | null;
   bank_account?: { id: string; name: string } | null;
+  sales_order?: { id: string; number: string; total: number } | null;
+  reference_document?: { id: string; number: string; balance: number; kind: "supplier_bill" | "invoice" } | null;
 };
 
 const norm = (s: string) =>
@@ -240,6 +242,56 @@ export const processDocument = createServerFn({ method: "POST" })
         matches.bank_account = found ? { id: found.id, name: `${found.bank_name} · ${found.name}` } : null;
       }
 
+      /* ---------------- sales order / credit note references ---------------- */
+      const soNumber = fv("so_number");
+      if (soNumber && extraction.doc_type === "delivery_note") {
+        const { data: so } = await supabase
+          .from("sales_orders")
+          .select("id, number, total, customer_id")
+          .eq("company_id", doc.company_id)
+          .eq("number", String(soNumber).toUpperCase())
+          .maybeSingle();
+        if (so) matches.sales_order = { id: so.id, number: so.number, total: Number(so.total) };
+      }
+      const refInv = fv("reference_invoice");
+      if (refInv && extraction.doc_type === "supplier_credit_note") {
+        const { data: b } = await supabase
+          .from("supplier_bills")
+          .select("id, number, balance, supplier_ref")
+          .eq("company_id", doc.company_id)
+          .or(`number.eq.${String(refInv)},supplier_ref.eq.${String(refInv)}`)
+          .limit(1)
+          .maybeSingle();
+        if (b) matches.reference_document = { id: b.id, number: b.number, balance: Number(b.balance), kind: "supplier_bill" };
+      }
+      if (refInv && extraction.doc_type === "customer_credit_note") {
+        const { data: inv } = await supabase
+          .from("invoices")
+          .select("id, number, balance")
+          .eq("company_id", doc.company_id)
+          .eq("number", String(refInv))
+          .maybeSingle();
+        if (inv) matches.reference_document = { id: inv.id, number: inv.number, balance: Number(inv.balance), kind: "invoice" };
+      }
+
+      /* ---------------- product matching per line ---------------- */
+      if (extraction.lines?.length) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, sku, name")
+          .eq("company_id", doc.company_id);
+        extraction.lines = extraction.lines.map((l) => {
+          const bySku = l.sku ? (products ?? []).find((p) => p.sku.toLowerCase() === String(l.sku).toLowerCase()) : undefined;
+          if (bySku) return { ...l, product_id: bySku.id, product_match: 100 };
+          const best = (products ?? [])
+            .map((p) => ({ p, score: similarity(l.description, p.name) }))
+            .sort((a, b) => b.score - a.score)[0];
+          return best && best.score >= 70
+            ? { ...l, product_id: best.p.id, product_match: best.score }
+            : { ...l, product_id: null, product_match: best?.score ?? 0 };
+        });
+      }
+
       /* ---------------- validation ---------------- */
       const issues = validateExtraction(extraction);
       if (matches.duplicate) {
@@ -250,7 +302,24 @@ export const processDocument = createServerFn({ method: "POST" })
           detail: matches.duplicate.reason,
         });
       }
-      if (extraction.doc_type === "supplier_invoice" && !matches.supplier) {
+      if (["customer_invoice", "customer_credit_note", "customer_quotation", "sales_order"].includes(extraction.doc_type) && !matches.customer) {
+        issues.push({
+          code: "customer_not_found",
+          severity: "warning",
+          message: "Customer not found in your master data",
+          detail: "Choose the customer before approving.",
+        });
+      }
+      const unlinked = (extraction.lines ?? []).filter((l) => !l.product_id).length;
+      if (unlinked) {
+        issues.push({
+          code: "product_not_linked",
+          severity: "info",
+          message: `${unlinked} line${unlinked === 1 ? "" : "s"} not linked to a product`,
+          detail: "Pick the product so stock and costs update. Unlinked lines post as non-stock items.",
+        });
+      }
+      if (["supplier_invoice", "supplier_credit_note", "purchase_order", "supplier_quotation"].includes(extraction.doc_type) && !matches.supplier) {
         issues.push({
           code: "supplier_not_found",
           severity: "warning",
@@ -299,6 +368,53 @@ export const processDocument = createServerFn({ method: "POST" })
           error_message: null,
         })
         .eq("id", doc.id);
+
+      /* ---------------- Action Required ---------------- */
+      const errors = blocking(issues);
+      const flagged = [
+        ...(matches.duplicate ? [`Possible duplicate: ${matches.duplicate.reason}`] : []),
+        ...errors.map((i) => `${i.message}${i.detail ? ` — ${i.detail}` : ""}`),
+        ...issues.filter((i) => ["supplier_not_found", "customer_not_found", "po_variance"].includes(i.code)).map((i) => i.message),
+      ];
+      if (!needsType && flagged.length) {
+        const label = `${DOC_TYPE_MAP[extraction.doc_type]?.label ?? "Document"} · ${doc.file_name}`;
+        const body = {
+          type: matches.duplicate ? "document_duplicate" : "document_review",
+          title: matches.duplicate ? `Possible duplicate document: ${doc.file_name}` : `Document needs review: ${doc.file_name}`,
+          priority: (matches.duplicate || errors.length ? "high" : "medium") as "high" | "medium",
+          source: "Document intelligence",
+          entity_type: "document_upload",
+          entity_id: doc.id,
+          entity_label: label,
+          amount: total || null,
+          description: flagged.join("\n"),
+          reason: flagged[0] ?? null,
+          recommendation: "Open the document, correct the flagged fields, then approve it — or dismiss if it is a duplicate.",
+          confidence: confidence,
+          actions: ["investigate", "dismiss"] as never,
+          status: "open" as const,
+        };
+        if (doc.exception_id) {
+          await supabase.from("exceptions").update(body).eq("id", doc.exception_id);
+        } else {
+          const { data: code } = await (supabase as never as {
+            rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: string | null }>;
+          }).rpc("next_doc_number", { p_company: doc.company_id, p_kind: "exception" });
+          const { data: exc } = await supabase
+            .from("exceptions")
+            .insert({ ...body, company_id: doc.company_id, code: code ?? `EXC-${Date.now() % 100000}` })
+            .select("id")
+            .single();
+          if (exc) await supabase.from("document_uploads").update({ exception_id: exc.id }).eq("id", doc.id);
+        }
+        await log("exception", `Sent to Action Required: ${flagged[0]}`);
+      } else if (doc.exception_id) {
+        await supabase
+          .from("exceptions")
+          .update({ status: "resolved", resolved_at: new Date().toISOString(), resolution: "Issues cleared on re-processing" })
+          .eq("id", doc.exception_id)
+          .in("status", ["open", "in_review", "waiting"]);
+      }
 
       await log("extracted", `${Object.keys(extraction.fields ?? {}).length} fields, ${(extraction.lines ?? []).length} lines, ${(extraction.transactions ?? []).length} transactions`, { confidence });
       await log("validated", `${issues.length} validation finding${issues.length === 1 ? "" : "s"} — status ${status}`);
