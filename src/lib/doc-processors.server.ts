@@ -25,6 +25,8 @@ export type ProcessInput = {
   bytes: Uint8Array;
   /** Master data used for classification hints and entity matching. */
   hints?: { suppliers?: string[]; customers?: string[] };
+  /** Type confirmed by the user; skips classification. */
+  forceType?: string;
 };
 
 export interface DocumentProcessor {
@@ -434,6 +436,8 @@ export class HeuristicProcessor implements DocumentProcessor {
     }
 
     const cls = classify(input.fileName, text);
+
+    if (input.forceType) Object.assign(cls, { type: input.forceType, confidence: 100 });
 
     if (table && (cls.type === "bank_statement" || table.header.some((h) => /balance|debit|credit/.test(h)))) {
       const txns = statementFromTable(table);

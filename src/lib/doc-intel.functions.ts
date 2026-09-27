@@ -114,6 +114,7 @@ export const processDocument = createServerFn({ method: "POST" })
         fileName: doc.file_name,
         mimeType: doc.mime_type ?? "application/octet-stream",
         bytes,
+        ...(doc.doc_type_source === "user" && doc.doc_type && doc.doc_type !== "unknown" ? { forceType: doc.doc_type } : {}),
         hints: {
           suppliers: (suppliers ?? []).map((s) => s.name),
           customers: (customers ?? []).map((c) => c.name),
