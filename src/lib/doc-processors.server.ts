@@ -416,7 +416,8 @@ export class HeuristicProcessor implements DocumentProcessor {
     let note: string | undefined;
 
     if (isXlsx(input)) {
-      const rows = await readXlsx(input.bytes);
+      const rows = await readXlsx(input.bytes).catch(() => [] as string[][]);
+      if (!rows.length) note = "This spreadsheet could not be opened. Check it is a valid .xlsx file.";
       if (rows.length >= 2) {
         table = fixExcelDates({ header: rows[0]!.map((h) => h.toLowerCase()), rows: rows.slice(1) });
       }
