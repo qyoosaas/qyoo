@@ -36,6 +36,7 @@ import {
 import { ConfirmDialog, Field, NativeSelect } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/documents_/$id")({
   head: () => ({
@@ -553,6 +554,7 @@ function Review() {
                     <thead>
                       <tr>
                         <Th>Description</Th>
+                        <Th>Product</Th>
                         <Th right>Qty</Th>
                         <Th right>Rate</Th>
                         <Th right>VAT</Th>
@@ -564,6 +566,18 @@ function Review() {
                       {draft.lines.map((l, i) => (
                         <tr key={i}>
                           <Td className="max-w-[220px] truncate">{l.description}</Td>
+                          <Td>
+                            <NativeSelect
+                              value={l.product_id ?? ""}
+                              onChange={(v) => setLine(i, { product_id: v || null })}
+                              className={cn("h-7 w-[150px] text-[12px]", !l.product_id && "border-warning")}
+                            >
+                              <option value="">Not linked</option>
+                              {(lookups.data?.products ?? []).map((p) => (
+                                <option key={p.id} value={p.id}>{p.sku} · {p.name}</option>
+                              ))}
+                            </NativeSelect>
+                          </Td>
                           <Td right>
                             <input
                               disabled={posted}
@@ -678,7 +692,71 @@ function Review() {
             />
             <MatchRow label="Bank account" value={matches.bank_account?.name ?? "Not applicable"} />
             <MatchRow label="Possible duplicate" value={matches.duplicate ? matches.duplicate.label : "None detected"} />
+            {matches.reference_document ? (
+              <MatchRow
+                label="Credit applies to"
+                value={`${matches.reference_document.number} · open ${money(matches.reference_document.balance)}`}
+              />
+            ) : null}
           </dl>
+
+          {draft && !posted ? (
+            <div className="grid gap-2.5 border-t border-border px-4 py-3.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Link before approving</p>
+              {["supplier_invoice", "supplier_credit_note", "purchase_order", "supplier_quotation"].includes(draft.doc_type) ? (
+                <Field label="Supplier">
+                  <NativeSelect value={links["supplier_id"] ?? ""} onChange={(v) => setLink("supplier_id", v)}>
+                    <option value="">Choose supplier…</option>
+                    {(lookups.data?.suppliers ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {["customer_invoice", "customer_credit_note", "sales_order", "customer_quotation"].includes(draft.doc_type) ? (
+                <Field label="Customer">
+                  <NativeSelect value={links["customer_id"] ?? ""} onChange={(v) => setLink("customer_id", v)}>
+                    <option value="">Choose customer…</option>
+                    {(lookups.data?.customers ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {["supplier_invoice", "goods_receipt"].includes(draft.doc_type) ? (
+                <Field label="Purchase order">
+                  <NativeSelect value={links["purchase_order_id"] ?? ""} onChange={(v) => setLink("purchase_order_id", v)}>
+                    <option value="">{draft.doc_type === "goods_receipt" ? "Choose purchase order…" : "No purchase order"}</option>
+                    {(lookups.data?.pos ?? [])
+                      .filter((o) => !links["supplier_id"] || o.supplier_id === links["supplier_id"])
+                      .map((o) => (
+                        <option key={o.id} value={o.id}>{o.number}</option>
+                      ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {draft.doc_type === "delivery_note" ? (
+                <Field label="Sales order">
+                  <NativeSelect value={links["sales_order_id"] ?? ""} onChange={(v) => setLink("sales_order_id", v)}>
+                    <option value="">Choose sales order…</option>
+                    {(lookups.data?.sos ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.number}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {draft.doc_type === "bank_statement" ? (
+                <Field label="Bank account">
+                  <NativeSelect value={links["bank_account_id"] ?? ""} onChange={(v) => setLink("bank_account_id", v)}>
+                    <option value="">Choose bank account…</option>
+                    {(lookups.data?.banks ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.bank_name} · {o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+            </div>
+          ) : null}
 
           {matches.three_way?.length ? (
             <div className="border-t border-border">
