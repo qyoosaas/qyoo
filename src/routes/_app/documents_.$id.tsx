@@ -94,6 +94,7 @@ function Review() {
   const [focusField, setFocusField] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [links, setLinks] = useState<Record<string, string>>({});
 
   const row: any = doc.data;
   const original = (row?.original_extraction ?? null) as Extraction | null;
@@ -130,11 +131,18 @@ function Review() {
   const issues: ValidationIssue[] = useMemo(() => {
     if (!draft) return (row?.validation ?? []) as ValidationIssue[];
     const live = validateExtraction(draft);
-    const engine = ((row?.validation ?? []) as ValidationIssue[]).filter((i) =>
-      ["possible_duplicate", "supplier_not_found", "po_variance"].includes(i.code),
+    const engine = ((row?.validation ?? []) as ValidationIssue[]).filter(
+      (i) =>
+        ["possible_duplicate", "po_variance"].includes(i.code) ||
+        (i.code === "supplier_not_found" && !links["supplier_id"]) ||
+        (i.code === "customer_not_found" && !links["customer_id"]),
     );
-    return [...engine, ...live];
-  }, [draft, row?.validation]);
+    const unlinked = (draft.lines ?? []).filter((l) => !l.product_id).length;
+    const productIssue: ValidationIssue[] = unlinked
+      ? [{ code: "product_not_linked", severity: "info", message: `${unlinked} line${unlinked === 1 ? "" : "s"} not linked to a product`, detail: "Pick the product so stock and costs update. Unlinked lines post as non-stock items." }]
+      : [];
+    return [...engine, ...live, ...productIssue];
+  }, [draft, row?.validation, links]);
 
   const matches = (row?.matches ?? {}) as any;
   const def = draft ? DOC_TYPE_MAP[draft.doc_type] : null;
@@ -224,7 +232,6 @@ function Review() {
     },
   });
 
-  const [links, setLinks] = useState<Record<string, string>>({});
   useEffect(() => {
     setLinks({
       supplier_id: matches.supplier?.id ?? "",
