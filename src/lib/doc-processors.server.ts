@@ -25,6 +25,8 @@ export type ProcessInput = {
   bytes: Uint8Array;
   /** Master data used for classification hints and entity matching. */
   hints?: { suppliers?: string[]; customers?: string[] };
+  /** Type confirmed by the user; skips classification. */
+  forceType?: string;
 };
 
 export interface DocumentProcessor {
@@ -152,7 +154,8 @@ function statementFromTable(table: { header: string[]; rows: string[][] }): Extr
   for (const r of table.rows) {
     const rawDate = iDate >= 0 ? r[iDate] : undefined;
     if (!rawDate) continue;
-    const d = new Date(rawDate);
+    const iso = toIsoDate(rawDate);
+    const d = iso ? new Date(`${iso}T00:00:00Z`) : new Date(rawDate);
     if (Number.isNaN(d.getTime())) continue;
     const debit = iDr >= 0 ? numOf(r[iDr]) : 0;
     const credit = iCr >= 0 ? numOf(r[iCr]) : 0;
@@ -414,7 +417,8 @@ export class HeuristicProcessor implements DocumentProcessor {
     let note: string | undefined;
 
     if (isXlsx(input)) {
-      const rows = await readXlsx(input.bytes);
+      const rows = await readXlsx(input.bytes).catch(() => [] as string[][]);
+      if (!rows.length) note = "This spreadsheet could not be opened. Check it is a valid .xlsx file.";
       if (rows.length >= 2) {
         table = fixExcelDates({ header: rows[0]!.map((h) => h.toLowerCase()), rows: rows.slice(1) });
       }
@@ -434,6 +438,8 @@ export class HeuristicProcessor implements DocumentProcessor {
     }
 
     const cls = classify(input.fileName, text);
+
+    if (input.forceType) Object.assign(cls, { type: input.forceType, confidence: 100 });
 
     if (table && (cls.type === "bank_statement" || table.header.some((h) => /balance|debit|credit/.test(h)))) {
       const txns = statementFromTable(table);
@@ -488,6 +494,7 @@ export class HeuristicProcessor implements DocumentProcessor {
     const lineSum = round(lines.reduce((s, l) => s + l.line_total, 0));
     let derived = false;
     if (subtotal == null && lineSum) (subtotal = lineSum), (derived = true);
+    if (vat == null && lines.length && subtotal === lineSum) (vat = round(lines.reduce((a, l) => a + (l.vat_amount ?? 0), 0))), (derived = true);
     if (total == null && subtotal != null && vat != null) (total = round(subtotal + vat)), (derived = true);
     if (vat == null && total != null && subtotal != null) (vat = round(total - subtotal)), (derived = true);
     if (subtotal == null && total != null && vat != null) (subtotal = round(total - vat)), (derived = true);

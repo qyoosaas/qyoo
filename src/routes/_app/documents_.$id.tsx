@@ -36,6 +36,7 @@ import {
 import { ConfirmDialog, Field, NativeSelect } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/documents_/$id")({
   head: () => ({
@@ -93,6 +94,7 @@ function Review() {
   const [focusField, setFocusField] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [links, setLinks] = useState<Record<string, string>>({});
 
   const row: any = doc.data;
   const original = (row?.original_extraction ?? null) as Extraction | null;
@@ -129,11 +131,18 @@ function Review() {
   const issues: ValidationIssue[] = useMemo(() => {
     if (!draft) return (row?.validation ?? []) as ValidationIssue[];
     const live = validateExtraction(draft);
-    const engine = ((row?.validation ?? []) as ValidationIssue[]).filter((i) =>
-      ["possible_duplicate", "supplier_not_found", "po_variance"].includes(i.code),
+    const engine = ((row?.validation ?? []) as ValidationIssue[]).filter(
+      (i) =>
+        ["possible_duplicate", "po_variance"].includes(i.code) ||
+        (i.code === "supplier_not_found" && !links["supplier_id"]) ||
+        (i.code === "customer_not_found" && !links["customer_id"]),
     );
-    return [...engine, ...live];
-  }, [draft, row?.validation]);
+    const unlinked = (draft.lines ?? []).filter((l) => !l.product_id).length;
+    const productIssue: ValidationIssue[] = unlinked
+      ? [{ code: "product_not_linked", severity: "info", message: `${unlinked} line${unlinked === 1 ? "" : "s"} not linked to a product`, detail: "Pick the product so stock and costs update. Unlinked lines post as non-stock items." }]
+      : [];
+    return [...engine, ...live, ...productIssue];
+  }, [draft, row?.validation, links]);
 
   const matches = (row?.matches ?? {}) as any;
   const def = draft ? DOC_TYPE_MAP[draft.doc_type] : null;
@@ -199,79 +208,116 @@ function Review() {
     }
   };
 
+  /* ------------------------------ links ------------------------------ */
+
+  const lookups = useQuery({
+    queryKey: ["doc_review_lookups"],
+    queryFn: async () => {
+      const [p, s, c, po, so, ba] = await Promise.all([
+        supabase.from("products").select("id, sku, name").eq("company_id", COMPANY_ID).order("sku"),
+        supabase.from("suppliers").select("id, name").eq("company_id", COMPANY_ID).order("name"),
+        supabase.from("customers").select("id, name").eq("company_id", COMPANY_ID).order("name"),
+        supabase.from("purchase_orders").select("id, number, supplier_id, status").eq("company_id", COMPANY_ID).neq("status", "cancelled").order("number", { ascending: false }).limit(300),
+        supabase.from("sales_orders").select("id, number, customer_id, status").eq("company_id", COMPANY_ID).neq("status", "cancelled").order("number", { ascending: false }).limit(300),
+        supabase.from("bank_accounts").select("id, name, bank_name").eq("company_id", COMPANY_ID),
+      ]);
+      return {
+        products: p.data ?? [],
+        suppliers: s.data ?? [],
+        customers: c.data ?? [],
+        pos: po.data ?? [],
+        sos: so.data ?? [],
+        banks: ba.data ?? [],
+      };
+    },
+  });
+
+  useEffect(() => {
+    setLinks({
+      supplier_id: matches.supplier?.id ?? "",
+      customer_id: matches.customer?.id ?? "",
+      purchase_order_id: matches.purchase_order?.id ?? "",
+      sales_order_id: matches.sales_order?.id ?? "",
+      bank_account_id: matches.bank_account?.id ?? "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row?.id, row?.processed_at]);
+  const setLink = (k: string, v: string) => setLinks((s) => ({ ...s, [k]: v }));
+
   /* ------------------------------ approval ------------------------------ */
 
   const approve = useAction(
     async () => {
       if (!draft) throw new Error("Nothing to post");
       const v = (k: string) => draft.fields[k]?.value ?? null;
+      const s = (k: string) => (v(k) == null ? null : String(v(k)));
       const n = (k: string) => Number(v(k) ?? 0);
-      const lines = (draft.lines ?? []).map((l) => ({
-        product_id: null,
+      const need = (k: string, msg: string) => {
+        if (!links[k]) throw new Error(msg);
+        return links[k];
+      };
+      const items = (draft.lines ?? []).map((l) => ({
+        product_id: l.product_id ?? null,
         description: l.description,
         quantity: Number(l.quantity),
         unit_price: Number(l.unit_price),
         discount: Number(l.discount ?? 0),
-        vat_rate: Number(l.vat_rate ?? 0),
+        vat_rate: Number(l.vat_rate ?? 0) > 1 ? Number(l.vat_rate) / 100 : Number(l.vat_rate ?? 0),
       }));
+      const matchOpen = <T extends { description: string; product_id: string | null; open_quantity: number }>(open: T[]) =>
+        open.map((o) => {
+          const hit = (draft.lines ?? []).find(
+            (l) =>
+              (l.product_id && l.product_id === o.product_id) ||
+              l.description.toLowerCase().includes(o.description.toLowerCase().slice(0, 12)) ||
+              o.description.toLowerCase().includes(l.description.toLowerCase().slice(0, 12)),
+          );
+          return { o, qty: Math.min(Number(hit?.quantity_received ?? hit?.quantity ?? 0), Number(o.open_quantity)) };
+        });
 
-      let entity: { type: string; id: string; label: string };
-
+      let payload: Record<string, unknown>;
       switch (draft.doc_type) {
-        case "supplier_invoice": {
-          if (!matches.supplier?.id) throw new Error("Link a supplier before posting this bill");
-          const billId = await actions.createSupplierBill({
-            supplier_id: matches.supplier.id,
-            bill_date: String(v("invoice_date")),
-            due_date: v("due_date") ? String(v("due_date")) : null,
-            items: lines,
-            supplier_ref: String(v("invoice_number") ?? ""),
-            purchase_order_id: matches.purchase_order?.id ?? null,
-          });
-          entity = { type: "supplier_bill", id: billId, label: String(v("invoice_number") ?? "Bill") };
+        case "supplier_invoice":
+          payload = {
+            kind: "supplier_bill",
+            supplier_id: need("supplier_id", "Choose the supplier before posting this bill"),
+            date: s("invoice_date"),
+            due_date: s("due_date"),
+            reference: s("invoice_number"),
+            purchase_order_id: links["purchase_order_id"] || null,
+            items,
+          };
           break;
-        }
-        case "customer_invoice": {
-          if (!matches.customer?.id) throw new Error("Link a customer before posting this invoice");
-          const invId = await actions.createInvoice({
-            customer_id: matches.customer.id,
-            invoice_date: String(v("invoice_date")),
-            due_date: v("due_date") ? String(v("due_date")) : null,
-            items: lines,
-            notes: `Imported from ${row.file_name}`,
-            post: true,
-          });
-          entity = { type: "invoice", id: invId, label: String(v("invoice_number") ?? "Invoice") };
+        case "customer_invoice":
+          payload = { kind: "invoice", customer_id: need("customer_id", "Choose the customer before posting this invoice"), date: s("invoice_date"), due_date: s("due_date"), items };
           break;
-        }
         case "purchase_order":
-        case "supplier_quotation": {
-          if (!matches.supplier?.id) throw new Error("Link a supplier before creating the purchase order");
-          const poId = await actions.createPurchaseOrder({
-            supplier_id: matches.supplier.id,
-            order_date: String(v("po_date") ?? v("quotation_date")),
-            expected_date: v("delivery_date") ? String(v("delivery_date")) : null,
-            items: lines,
-          });
-          entity = { type: "purchase_order", id: poId, label: String(v("po_number") ?? "Purchase order") };
+        case "supplier_quotation":
+          payload = {
+            kind: "purchase_order",
+            supplier_id: need("supplier_id", "Choose the supplier before creating the purchase order"),
+            date: s("po_date") ?? s("quotation_date") ?? isoToday(),
+            expected_date: s("delivery_date"),
+            items,
+          };
           break;
-        }
-        case "expense_receipt": {
-          const expId = await actions.createExpense({
-            merchant: String(v("merchant")),
-            date: String(v("receipt_date") ?? isoToday()),
-            gross: n("total"),
-            employee: v("employee") ? String(v("employee")) : null,
-            method: String(v("payment_method") ?? "company_card"),
-            has_document: true,
-          });
-          entity = { type: "expense", id: expId, label: String(v("merchant")) };
+        case "sales_order":
+        case "customer_quotation":
+          payload = {
+            kind: "sales_order",
+            customer_id: need("customer_id", "Choose the customer before creating the sales order"),
+            date: s("order_date") ?? s("quotation_date") ?? isoToday(),
+            expected_date: s("delivery_date"),
+            items,
+          };
           break;
-        }
-        case "bank_statement": {
-          if (!matches.bank_account?.id) throw new Error("Choose the bank account this statement belongs to");
-          const res = await actions.importBankTransactions({
-            bank_account_id: matches.bank_account.id,
+        case "expense_receipt":
+          payload = { kind: "expense", merchant: s("merchant"), date: s("receipt_date") ?? isoToday(), total: n("total"), employee: s("employee"), method: s("payment_method") };
+          break;
+        case "bank_statement":
+          payload = {
+            kind: "bank_statement",
+            bank_account_id: need("bank_account_id", "Choose the bank account this statement belongs to"),
             rows: (draft.transactions ?? []).map((t) => ({
               txn_date: t.txn_date,
               description: t.description,
@@ -280,60 +326,61 @@ function Review() {
               direction: t.direction,
               balance_after: t.balance ?? null,
             })),
-            batch: row.file_name,
-          });
-          toast.message(`${res.imported} transactions imported, ${res.duplicates} duplicates skipped`);
-          entity = { type: "bank_statement", id: matches.bank_account.id, label: matches.bank_account.name };
+          };
           break;
-        }
         case "goods_receipt": {
-          if (!matches.purchase_order?.id) throw new Error("Link a purchase order before receiving goods");
-          const open = await actions.poOpenLines(matches.purchase_order.id);
-          const payload = open
-            .map((o) => {
-              const hit = (draft.lines ?? []).find((l) =>
-                l.description.toLowerCase().includes(o.description.toLowerCase().slice(0, 12)) ||
-                o.description.toLowerCase().includes(l.description.toLowerCase().slice(0, 12)),
-              );
-              const qty = Math.min(Number(hit?.quantity_received ?? hit?.quantity ?? 0), Number(o.open_quantity));
-              return { purchase_order_item_id: o.purchase_order_item_id, quantity: qty };
-            })
-            .filter((l) => l.quantity > 0);
-          if (!payload.length) throw new Error("No receivable quantity matched the purchase order lines");
-          const grnId = await actions.receiveGoods({
-            purchase_order_id: matches.purchase_order.id,
-            date: String(v("grn_date") ?? isoToday()),
-            lines: payload,
-          });
-          entity = { type: "goods_receipt", id: grnId, label: String(v("grn_number") ?? "GRN") };
+          const po = need("purchase_order_id", "Choose the purchase order these goods were received against");
+          const lines = matchOpen(await actions.poOpenLines(po))
+            .filter((x) => x.qty > 0)
+            .map((x) => ({ purchase_order_item_id: x.o.purchase_order_item_id, quantity: x.qty }));
+          if (!lines.length) throw new Error("No open quantity on the purchase order matches these lines");
+          payload = { kind: "goods_receipt", purchase_order_id: po, date: s("grn_date") ?? isoToday(), lines };
           break;
         }
+        case "delivery_note": {
+          const so = need("sales_order_id", "Choose the sales order this delivery belongs to");
+          const lines = matchOpen(await actions.soOpenLines(so))
+            .filter((x) => x.qty > 0)
+            .map((x) => ({ sales_order_item_id: x.o.sales_order_item_id, quantity: x.qty }));
+          if (!lines.length) throw new Error("No open quantity on the sales order matches these lines");
+          payload = { kind: "delivery_note", sales_order_id: so, date: s("delivery_date") ?? isoToday(), lines };
+          break;
+        }
+        case "supplier_credit_note":
+          payload = {
+            kind: "supplier_credit",
+            supplier_id: need("supplier_id", "Choose the supplier before posting this credit note"),
+            date: s("credit_note_date"),
+            reference: s("credit_note_number"),
+            total: n("total"),
+            vat: n("vat_amount"),
+            bill_id: matches.reference_document?.kind === "supplier_bill" ? matches.reference_document.id : null,
+          };
+          break;
+        case "customer_credit_note":
+          payload = {
+            kind: "customer_credit",
+            customer_id: need("customer_id", "Choose the customer before posting this credit note"),
+            date: s("credit_note_date"),
+            reference: s("credit_note_number"),
+            total: n("total"),
+            vat: n("vat_amount"),
+            invoice_id: matches.reference_document?.kind === "invoice" ? matches.reference_document.id : null,
+          };
+          break;
         default:
-          throw new Error(
-            `${docTypeLabel(draft.doc_type)} is stored in the vault — no automatic workflow exists for this type yet`,
-          );
+          throw new Error(`${docTypeLabel(draft.doc_type)} is kept in the vault — there is no automatic workflow for this type yet`);
       }
 
-      await supabase
-        .from("document_uploads")
-        .update({
-          status: "posted",
-          final_posted_data: draft as never,
-          linked_entity_type: entity.type,
-          linked_entity_id: entity.type === "bank_statement" ? null : entity.id,
-          linked_entity_label: entity.label,
-          approved_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-      await supabase.from("document_upload_events").insert({
-        document_upload_id: id,
-        stage: "posted",
-        detail: `Approved by the user and converted into ${titleCase(entity.type)} ${entity.label}`,
-        actor: "Ahmed Rahman",
+      const { data, error } = await (supabase as any).rpc("approve_document", {
+        p_upload: id,
+        p_payload: { ...payload, draft },
+        p_actor: "Ahmed Rahman",
       });
-
-      return entity;
+      if (error) throw new Error(error.message);
+      const res = data as { type: string; id: string; label: string; import?: { imported: number; duplicates: number } };
+      if (res.import) toast.message(`${res.import.imported} transactions imported, ${res.import.duplicates} duplicates skipped`);
+      return res;
     },
     {
       success: (e) => `Posted — ${titleCase(e.type)} ${e.label} created`,
@@ -514,6 +561,7 @@ function Review() {
                     <thead>
                       <tr>
                         <Th>Description</Th>
+                        <Th>Product</Th>
                         <Th right>Qty</Th>
                         <Th right>Rate</Th>
                         <Th right>VAT</Th>
@@ -525,6 +573,18 @@ function Review() {
                       {draft.lines.map((l, i) => (
                         <tr key={i}>
                           <Td className="max-w-[220px] truncate">{l.description}</Td>
+                          <Td>
+                            <NativeSelect
+                              value={l.product_id ?? ""}
+                              onChange={(v) => setLine(i, { product_id: v || null })}
+                              className={cn("h-7 w-[150px] text-[12px]", !l.product_id && "border-warning")}
+                            >
+                              <option value="">Not linked</option>
+                              {(lookups.data?.products ?? []).map((p) => (
+                                <option key={p.id} value={p.id}>{p.sku} · {p.name}</option>
+                              ))}
+                            </NativeSelect>
+                          </Td>
                           <Td right>
                             <input
                               disabled={posted}
@@ -639,7 +699,71 @@ function Review() {
             />
             <MatchRow label="Bank account" value={matches.bank_account?.name ?? "Not applicable"} />
             <MatchRow label="Possible duplicate" value={matches.duplicate ? matches.duplicate.label : "None detected"} />
+            {matches.reference_document ? (
+              <MatchRow
+                label="Credit applies to"
+                value={`${matches.reference_document.number} · open ${money(matches.reference_document.balance)}`}
+              />
+            ) : null}
           </dl>
+
+          {draft && !posted ? (
+            <div className="grid gap-2.5 border-t border-border px-4 py-3.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Link before approving</p>
+              {["supplier_invoice", "supplier_credit_note", "purchase_order", "supplier_quotation"].includes(draft.doc_type) ? (
+                <Field label="Supplier">
+                  <NativeSelect value={links["supplier_id"] ?? ""} onChange={(v) => setLink("supplier_id", v)}>
+                    <option value="">Choose supplier…</option>
+                    {(lookups.data?.suppliers ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {["customer_invoice", "customer_credit_note", "sales_order", "customer_quotation"].includes(draft.doc_type) ? (
+                <Field label="Customer">
+                  <NativeSelect value={links["customer_id"] ?? ""} onChange={(v) => setLink("customer_id", v)}>
+                    <option value="">Choose customer…</option>
+                    {(lookups.data?.customers ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {["supplier_invoice", "goods_receipt"].includes(draft.doc_type) ? (
+                <Field label="Purchase order">
+                  <NativeSelect value={links["purchase_order_id"] ?? ""} onChange={(v) => setLink("purchase_order_id", v)}>
+                    <option value="">{draft.doc_type === "goods_receipt" ? "Choose purchase order…" : "No purchase order"}</option>
+                    {(lookups.data?.pos ?? [])
+                      .filter((o) => !links["supplier_id"] || o.supplier_id === links["supplier_id"])
+                      .map((o) => (
+                        <option key={o.id} value={o.id}>{o.number}</option>
+                      ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {draft.doc_type === "delivery_note" ? (
+                <Field label="Sales order">
+                  <NativeSelect value={links["sales_order_id"] ?? ""} onChange={(v) => setLink("sales_order_id", v)}>
+                    <option value="">Choose sales order…</option>
+                    {(lookups.data?.sos ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.number}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+              {draft.doc_type === "bank_statement" ? (
+                <Field label="Bank account">
+                  <NativeSelect value={links["bank_account_id"] ?? ""} onChange={(v) => setLink("bank_account_id", v)}>
+                    <option value="">Choose bank account…</option>
+                    {(lookups.data?.banks ?? []).map((o) => (
+                      <option key={o.id} value={o.id}>{o.bank_name} · {o.name}</option>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              ) : null}
+            </div>
+          ) : null}
 
           {matches.three_way?.length ? (
             <div className="border-t border-border">
