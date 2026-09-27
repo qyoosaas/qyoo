@@ -154,7 +154,8 @@ function statementFromTable(table: { header: string[]; rows: string[][] }): Extr
   for (const r of table.rows) {
     const rawDate = iDate >= 0 ? r[iDate] : undefined;
     if (!rawDate) continue;
-    const d = new Date(rawDate);
+    const iso = toIsoDate(rawDate);
+    const d = iso ? new Date(`${iso}T00:00:00Z`) : new Date(rawDate);
     if (Number.isNaN(d.getTime())) continue;
     const debit = iDr >= 0 ? numOf(r[iDr]) : 0;
     const credit = iCr >= 0 ? numOf(r[iCr]) : 0;
@@ -493,6 +494,7 @@ export class HeuristicProcessor implements DocumentProcessor {
     const lineSum = round(lines.reduce((s, l) => s + l.line_total, 0));
     let derived = false;
     if (subtotal == null && lineSum) (subtotal = lineSum), (derived = true);
+    if (vat == null && lines.length && subtotal === lineSum) (vat = round(lines.reduce((a, l) => a + (l.vat_amount ?? 0), 0))), (derived = true);
     if (total == null && subtotal != null && vat != null) (total = round(subtotal + vat)), (derived = true);
     if (vat == null && total != null && subtotal != null) (vat = round(total - subtotal)), (derived = true);
     if (subtotal == null && total != null && vat != null) (subtotal = round(total - vat)), (derived = true);
