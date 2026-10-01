@@ -7,6 +7,7 @@ Make the full authenticated app consistent, clear, responsive, and presentation-
 - Detail pages use several different back-navigation patterns: invoice links sit above the title, orders place a back action beside primary actions, and document pages use different labels and icon treatment.
 - Desktop navigation disappears on smaller screens without a replacement, making the authenticated app difficult to use on mobile and tablet.
 - Lists are inconsistent: some rows are clickable, some only link the record number, and some operational records have no obvious route to their details.
+- Purchase ageing contains a broken row destination that can open a missing GRN instead of the intended supplier context.
 - Page action hierarchy varies. Destructive actions such as Void/Delete appear repeatedly as always-visible text, while secondary edit actions and primary workflow actions shift position between screens.
 - Loading, empty, unavailable, and failed states are implemented differently and often do not provide a clear recovery action.
 - Settings currently expose raw structured values instead of understandable fields, selectors, switches, and amount/percentage controls.
@@ -33,6 +34,7 @@ Make the full authenticated app consistent, clear, responsive, and presentation-
 - **Banking:** improve account/filter controls, transaction selection, matching status clarity, reconciliation summary, and narrow-screen handling.
 - **Expenses and Inventory:** add consistent record inspection/edit entry points, replace repeated destructive text with subtle menus, and clarify locked/posted states.
 - **Production and Accounting:** improve selected-record guidance, table navigation, journal/source links, and period/status readability.
+- **Production and Accounting:** add the missing production-order creation/detail/action experience at the UI level, improve selected-record guidance, table navigation, journal/source links, and period/status readability.
 - **Documents:** remove duplicated visual hierarchy, refine upload/review states, and keep the approval path visibly distinct from posting status.
 - **FP&A and Reports:** standardize period selection, tabs, exports, comparison labels, and responsive financial statements.
 - **Settings:** replace raw structured text with business-friendly inputs, selects, toggles, percentages, currency amounts, validation, and clear save feedback.
