@@ -21,13 +21,15 @@ type Hit = {
   params?: Record<string, string>;
 };
 
-const COMMANDS: { label: string; to: string; hint: string }[] = [
-  { label: "Create invoice", to: "/sales", hint: "Sales" },
-  { label: "Create purchase order", to: "/purchases", hint: "Purchases" },
-  { label: "Upload document", to: "/documents", hint: "Documents" },
-  { label: "Record expense", to: "/expenses", hint: "Expenses" },
-  { label: "Import bank statement", to: "/banking", hint: "Banking" },
-  { label: "Reconcile transactions", to: "/banking", hint: "Banking" },
+const COMMANDS: { label: string; to: string; hint: string; action?: string }[] = [
+  { label: "Create invoice", to: "/sales", hint: "Sales", action: "new-invoice" },
+  { label: "Create sales order", to: "/sales", hint: "Sales", action: "new-order" },
+  { label: "Create purchase order", to: "/purchases", hint: "Purchases", action: "new-po" },
+  { label: "Create supplier bill", to: "/purchases", hint: "Purchases", action: "new-bill" },
+  { label: "Upload document", to: "/documents", hint: "Documents", action: "upload" },
+  { label: "Record expense", to: "/expenses", hint: "Expenses", action: "new-expense" },
+  { label: "Import bank statement", to: "/banking", hint: "Banking", action: "import" },
+  { label: "Reconcile transactions", to: "/banking", hint: "Banking", action: "reconcile" },
   { label: "Find customer", to: "/sales", hint: "Sales" },
   { label: "Find supplier", to: "/purchases", hint: "Purchases" },
   { label: "Open Profit & Loss", to: "/reports", hint: "Reports" },
@@ -176,9 +178,9 @@ export function CommandPalette({
     };
   }, [term]);
 
-  const go = (to: string, params?: Record<string, string>) => {
+  const go = (to: string, params?: Record<string, string>, action?: string) => {
     onOpenChange(false);
-    navigate({ to, params } as never);
+    navigate({ to, params, search: action ? { action } : {} } as never);
   };
 
   return (
@@ -206,7 +208,7 @@ export function CommandPalette({
         ) : null}
         <CommandGroup heading="Commands">
           {COMMANDS.filter((c) => c.label.toLowerCase().includes(term.toLowerCase())).map((c) => (
-            <CommandItem key={c.label} value={c.label} onSelect={() => go(c.to)}>
+            <CommandItem key={c.label} value={c.label} onSelect={() => go(c.to, undefined, c.action)}>
               <span className="flex-1 text-[13px]">{c.label}</span>
               <span className="text-[11px] text-muted-foreground">{c.hint}</span>
             </CommandItem>

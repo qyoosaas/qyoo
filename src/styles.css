@@ -167,7 +167,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "cv11", "ss01";
-    letter-spacing: -0.011em;
+    letter-spacing: 0;
   }
 
   h1,
@@ -175,7 +175,7 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.021em;
+    letter-spacing: 0;
     font-weight: 560;
   }
 }
@@ -215,5 +215,5 @@
 @utility brand-wordmark {
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }

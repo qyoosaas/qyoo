@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Use shared `PageHeader`, `SegmentedTabs`, and responsive `AppShell` patterns for all finance screens so navigation and action hierarchy remain consistent.
+- Command-palette workflow commands navigate with an `action` search parameter that the destination page consumes and clears after opening the requested form.

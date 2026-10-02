@@ -20,6 +20,7 @@ import {
   ChevronsUpDown,
   LogOut,
   Check,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useExceptions } from "@/lib/fin-data";
@@ -34,6 +35,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV = [
   { to: "/overview", label: "Overview", icon: LayoutGrid, badge: false },
@@ -55,6 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [email, setEmail] = useState<string>("");
   const { data: exceptions } = useExceptions();
 
@@ -159,14 +163,43 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-[228px]">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/85 px-5 backdrop-blur">
-          <button
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0 lg:hidden" aria-label="Open navigation">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px]">
+              <SheetHeader className="border-b border-border px-5 py-4 text-left">
+                <SheetTitle><img src={qyooLogo.url} alt="Qyoo" className="h-[22px] w-auto" /></SheetTitle>
+              </SheetHeader>
+              <nav className="max-h-[calc(100vh-150px)] overflow-y-auto px-3 py-3">
+                {NAV.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link key={item.to} to={item.to} onClick={() => setMobileOpen(false)} className={cn("mb-0.5 flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-[13px]", pathname.startsWith(item.to) ? "bg-secondary font-medium" : "text-muted-foreground")}>
+                      <Icon className="h-4 w-4" /><span className="flex-1">{item.label}</span>
+                      {"badge" in item && item.badge && openCount > 0 ? <span className="num rounded-sm bg-signal px-1.5 py-0.5 text-[10px] text-signal-foreground">{openCount}</span> : null}
+                    </Link>
+                  );
+                })}
+              </nav>
+              <div className="absolute inset-x-0 bottom-0 border-t border-border p-3">
+                <Link to="/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-[13px]"><SettingsIcon className="h-4 w-4" />Settings</Link>
+                <Button variant="ghost" size="sm" className="mt-1 w-full justify-start gap-2" onClick={signOut}><LogOut className="h-4 w-4" />Sign out</Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+          <Button
+            type="button"
+            variant="outline"
             onClick={() => setPaletteOpen(true)}
-            className="row-hover flex h-8 max-w-[420px] flex-1 items-center gap-2 rounded-sm border border-border bg-card px-2.5 text-left text-[13px] text-muted-foreground hover:border-foreground/25"
+            className="row-hover flex h-8 min-w-0 max-w-[420px] flex-1 justify-start gap-2 px-2.5 text-left text-[13px] font-normal text-muted-foreground"
           >
             <Search className="h-3.5 w-3.5" />
-            <span className="flex-1">Search invoices, customers, transactions…</span>
-            <kbd className="num rounded-[3px] border border-border px-1 py-px text-[10px]">⌘K</kbd>
-          </button>
+            <span className="flex-1 truncate">Search invoices, customers, transactions…</span>
+            <kbd className="num hidden rounded-[3px] border border-border px-1 py-px text-[10px] sm:inline">⌘K</kbd>
+          </Button>
 
           <div className="ml-auto flex items-center gap-1">
             <Link
@@ -216,7 +249,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="min-w-0 flex-1 px-5 py-6 lg:px-8 lg:py-8">
+        <main className="min-w-0 flex-1 px-4 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-[1240px] space-y-6">{children}</div>
         </main>
       </div>
