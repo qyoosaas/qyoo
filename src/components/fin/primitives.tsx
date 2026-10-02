@@ -1,22 +1,71 @@
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export function PageHeader({
   title,
   subtitle,
   actions,
+  back,
 }: {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
+  back?: { to: string; label: string };
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-      <div>
-        <h1 className="text-[22px] font-medium tracking-tight text-foreground">{title}</h1>
+    <div className="space-y-3 border-b border-border pb-5">
+      {back ? (
+        <Link
+          to={back.to}
+          className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to {back.label}
+        </Link>
+      ) : null}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+        <div className="min-w-0">
+        <h1 className="truncate text-[22px] font-medium text-foreground">{title}</h1>
         {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+        </div>
+        {actions ? <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div> : null}
       </div>
-      {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+    </div>
+  );
+}
+
+export function SegmentedTabs<T extends string>({
+  items,
+  value,
+  onChange,
+  label = "View",
+}: {
+  items: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  label?: string;
+}) {
+  return (
+    <div role="tablist" aria-label={label} className="flex max-w-full gap-1 overflow-x-auto pb-0.5">
+      {items.map((item) => (
+        <Button
+          key={item}
+          type="button"
+          role="tab"
+          aria-selected={value === item}
+          variant="ghost"
+          size="sm"
+          onClick={() => onChange(item)}
+          className={cn(
+            "h-8 shrink-0 px-2.5 text-[13px] font-normal",
+            value === item ? "bg-secondary font-medium text-foreground" : "text-muted-foreground",
+          )}
+        >
+          {item}
+        </Button>
+      ))}
     </div>
   );
 }
@@ -219,12 +268,39 @@ export function TableShell({ children }: { children: ReactNode }) {
   );
 }
 
-export function EmptyState({ title, hint }: { title: string; hint?: string }) {
+export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
     <div className="px-4 py-14 text-center">
       <p className="text-sm font-medium text-foreground">{title}</p>
       {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+      {action ? <div className="mt-4 flex justify-center">{action}</div> : null}
     </div>
+  );
+}
+
+export function ErrorState({
+  title = "This information could not be loaded",
+  hint = "Try again. If the problem continues, return to the previous page.",
+  retry,
+}: {
+  title?: string;
+  hint?: string;
+  retry?: () => void;
+}) {
+  return (
+    <div className="panel px-4 py-14 text-center" role="alert">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">{hint}</p>
+      {retry ? <Button size="sm" variant="outline" className="mt-4" onClick={retry}>Try again</Button> : null}
+    </div>
+  );
+}
+
+export function DetailLink({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1 font-medium underline-offset-4 group-hover:underline">
+      {children}<ChevronRight className="h-3 w-3 text-muted-foreground" />
+    </span>
   );
 }
 
