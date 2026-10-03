@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertTriangle, Info, RotateCcw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Info, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID, money, shortDate, titleCase } from "@/lib/format";
 import { processDocument, setDocumentType } from "@/lib/doc-intel.functions";

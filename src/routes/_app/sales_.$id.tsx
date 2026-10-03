@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormDialog, Field, ConfirmDialog, EditDocDialog } from "@/components/fin/forms";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
-import { ArrowLeft, Truck, ReceiptText, Pencil } from "lucide-react";
+import { Truck, ReceiptText, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sales_/$id")({
   head: () => ({
