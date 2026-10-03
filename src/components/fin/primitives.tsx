@@ -20,6 +20,7 @@ export function PageHeader({
       {back ? (
         <Link
           to={back.to}
+          search={{ action: undefined } as never}
           className="inline-flex items-center gap-1.5 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Back to {back.label}

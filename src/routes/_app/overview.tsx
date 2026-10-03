@@ -101,7 +101,7 @@ function Overview() {
         actions={
           <>
           <Button asChild size="sm" variant="outline">
-            <Link to="/documents">
+            <Link to="/documents" search={{ action: "" }}>
               <Upload className="mr-1.5 h-3.5 w-3.5" />
               Upload document
             </Link>

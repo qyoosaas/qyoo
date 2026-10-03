@@ -191,14 +191,10 @@ function DocPage() {
     <>
       <PageHeader
         title={`${cfg.title} · ${d.number}`}
+        back={cfg.back}
         subtitle={`${shortDate(d[cfg.dateField])}${party.data ? ` · ${party.data.name}` : ""}`}
         actions={
           <div className="flex items-center gap-2">
-            <Link to={cfg.back.to}>
-              <Button variant="ghost" size="sm">
-                Back to {cfg.back.label}
-              </Button>
-            </Link>
             <Button variant="ghost" size="sm" onClick={() => setEditing(d)} title="Edit this document">
               <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
             </Button>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { money, shortDate, titleCase, daysBetween } from "@/lib/format";
@@ -13,7 +13,6 @@ import {
   statusTone,
   AutomationNote,
 } from "@/components/fin/primitives";
-import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/_app/invoices/$id")({
   head: () => ({
@@ -67,15 +66,9 @@ function InvoiceDetail() {
 
   return (
     <>
-      <Link
-        to="/sales"
-        className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" /> Sales
-      </Link>
-
       <PageHeader
         title={inv.number}
+        back={{ to: "/sales", label: "Sales" }}
         subtitle={`${data.customer?.name ?? "Customer"} · issued ${shortDate(inv.invoice_date)} · due ${shortDate(inv.due_date)}`}
         actions={
           <Pill tone={statusTone(late ? "overdue" : inv.status)}>

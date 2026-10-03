@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
 import { money, shortDate, titleCase } from "@/lib/format";
@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/expenses")({
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Expenses · Qyoo · Autonomous Finance OS" },
@@ -36,11 +37,18 @@ export const Route = createFileRoute("/_app/expenses")({
 });
 
 function Expenses() {
+  const { action } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const expenses = useTable<any>("expenses", ["e"], (q: any) => q.order("expense_date", { ascending: false }).order("number", { ascending: false }));
   const categories = useTable<any>("expense_categories", ["e"]);
   const [term, setTerm] = useState("");
   const [adding, setAdding] = useState(false);
   const { askVoid, dialog: voidDialog } = useVoid();
+
+  useEffect(() => {
+    if (action === "new-expense") setAdding(true);
+    if (action) navigate({ search: { action: "" }, replace: true });
+  }, [action, navigate]);
 
   const catById = useMemo(() => {
     const m = new Map<string, string>();

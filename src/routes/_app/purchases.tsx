@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTable } from "@/lib/fin-data";
 import { money, shortDate, titleCase, daysBetween } from "@/lib/format";
 import {
@@ -13,14 +13,15 @@ import {
   Td,
   statusTone,
   AutomationNote,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/purchases")({
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Purchases · Qyoo · Autonomous Finance OS" },
@@ -59,6 +60,7 @@ const SUPPLIER_FIELDS: EntityField[] = [
 ];
 
 function Purchases() {
+  const { action } = Route.useSearch();
   const bills = useTable<any>("supplier_bills", ["p"], (q: any) => q.order("bill_date", { ascending: false }));
   const orders = useTable<any>("purchase_orders", ["p"], (q: any) => q.order("order_date", { ascending: false }));
   const receipts = useTable<any>("goods_receipts", ["p"], (q: any) => q.order("receipt_date", { ascending: false }));
@@ -72,6 +74,12 @@ function Purchases() {
   const [supRow, setSupRow] = useState<any | null>(null);
   const { askVoid, dialog: voidDialog } = useVoid();
   const { askDelete, dialog: delDialog } = useDeleteRow("suppliers", "Supplier");
+
+  useEffect(() => {
+    if (action === "new-po") setNewDoc("po");
+    if (action === "new-bill") setNewDoc("bill");
+    if (action) navigate({ to: "/purchases", search: { action: "" }, replace: true });
+  }, [action, navigate]);
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -154,18 +162,7 @@ function Purchases() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-sm px-2.5 py-1.5 text-[13px]",
-              tab === t ? "bg-secondary font-medium text-foreground" : "text-muted-foreground hover:bg-secondary/60",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        <SegmentedTabs items={TABS} value={tab} onChange={setTab} label="Purchase sections" />
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
@@ -377,9 +374,7 @@ function Purchases() {
             </thead>
             <tbody>
               {bySupplier.map((r) => (
-                <tr key={r.id} className="row-hover cursor-pointer hover:bg-secondary/40"
-                    onClick={() => navigate({ to: "/docs/$type/$id", params: { type: "grn", id: r.id } })}
-                  >
+                <tr key={r.id} className="row-hover hover:bg-secondary/40">
                   <Td>{r.name}</Td>
                   {r.buckets.map((v, i) => (
                     <Td key={i} right>

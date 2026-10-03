@@ -11,9 +11,9 @@ import {
   EmptyState,
   AutomationNote,
   Metric,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { ExceptionDrawer } from "@/components/fin/exception-drawer";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/action-required")({
   head: () => ({
@@ -79,22 +79,7 @@ function ActionRequired() {
         title="Exception queue"
         description="Sorted by priority, then most recent"
         actions={
-          <div className="flex flex-wrap gap-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  "rounded-sm px-2 py-1 text-[11px] font-medium capitalize",
-                  filter === f
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-secondary",
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+          <SegmentedTabs items={FILTERS} value={filter} onChange={setFilter} label="Exception priority" />
         }
       >
         {isLoading ? (

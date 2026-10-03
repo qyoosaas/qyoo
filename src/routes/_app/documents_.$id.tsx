@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, AlertTriangle, Info, RotateCcw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Info, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID, money, shortDate, titleCase } from "@/lib/format";
 import { processDocument, setDocumentType } from "@/lib/doc-intel.functions";
@@ -400,13 +400,10 @@ function Review() {
     <>
       <PageHeader
         title={row.file_name}
+        back={{ to: "/documents", label: "Documents" }}
         subtitle={`${docTypeLabel(row.doc_type)} · ${STATUS_LABEL[row.status] ?? row.status} · uploaded ${shortDate(row.created_at)}`}
         actions={
           <>
-            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-[13px]" onClick={() => navigate({ to: "/documents" })}>
-              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Documents
-            </Button>
             <Button
               variant="outline"
               size="sm"

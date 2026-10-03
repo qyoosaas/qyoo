@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormDialog, Field, ConfirmDialog, EditDocDialog } from "@/components/fin/forms";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
-import { ArrowLeft, Truck, ReceiptText, Pencil } from "lucide-react";
+import { Truck, ReceiptText, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_app/sales_/$id")({
   head: () => ({
@@ -178,12 +178,10 @@ function SalesOrderDetail() {
     <>
       <PageHeader
         title={`Sales order ${so.data.number}`}
+        back={{ to: "/sales", label: "Sales" }}
         subtitle={`${customer.data?.name ?? "Customer"} · ordered ${shortDate(so.data.order_date)} · expected ${shortDate(so.data.expected_delivery)}`}
         actions={
           <>
-            <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/sales" })}>
-              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Sales
-            </Button>
             {so.data.status !== "cancelled" && !fullyDelivered ? (
               <Button size="sm" variant="outline" onClick={() => setDeliverOpen(true)}>
                 <Truck className="mr-1.5 h-3.5 w-3.5" /> Deliver goods
@@ -354,7 +352,7 @@ function SalesOrderDetail() {
             <div className="text-muted-foreground">
               {customer.data?.email ?? "No email"} · terms {customer.data?.payment_terms_days ?? 30} days
             </div>
-            <Link to="/sales" className="text-[12px] underline underline-offset-2">
+            <Link to="/sales" search={{ action: "" }} className="text-[12px] underline underline-offset-2">
               Open customer list
             </Link>
           </div>

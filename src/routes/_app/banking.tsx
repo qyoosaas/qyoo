@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useTable, rankMatches } from "@/lib/fin-data";
 import { money, shortDate, titleCase } from "@/lib/format";
 import {
@@ -14,6 +14,7 @@ import {
   statusTone,
   Confidence,
   AutomationNote,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,7 @@ import { actions, useAction, isoToday } from "@/lib/fin-actions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/banking")({
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Banking · Qyoo · Autonomous Finance OS" },
@@ -127,6 +129,8 @@ export function parseStatement(text: string): { rows: ParsedRow[]; skipped: numb
 }
 
 function Banking() {
+  const { action } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const accounts = useTable<any>("bank_accounts", ["b"], (q: any) => q.order("name"));
   const txns = useTable<any>("bank_transactions", ["b"], (q: any) =>
     q.order("txn_date", { ascending: false }).limit(500),
@@ -160,6 +164,12 @@ function Banking() {
   const matched = all.filter((t: any) => t.status === "matched").length;
   const unmatched = all.filter((t: any) => t.status === "unmatched").length;
   const suggested = all.filter((t: any) => t.status === "suggested").length;
+
+  useEffect(() => {
+    if (action === "import") setImportOpen(true);
+    if (action === "reconcile") setReconcileOpen(true);
+    if (action) navigate({ search: { action: "" }, replace: true });
+  }, [action, navigate]);
 
   const allocate = useAction(
     (p: { txn_id: string; kind: "invoice" | "bill" | "gl"; target_id?: string | null; account_code?: string | null }) =>
@@ -231,18 +241,7 @@ function Banking() {
             </option>
           ))}
         </select>
-        {FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "rounded-sm px-2.5 py-1.5 text-[13px] capitalize",
-              filter === f ? "bg-secondary font-medium" : "text-muted-foreground hover:bg-secondary/60",
-            )}
-          >
-            {f}
-          </button>
-        ))}
+        <SegmentedTabs items={FILTERS} value={filter} onChange={setFilter} label="Transaction status" />
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}

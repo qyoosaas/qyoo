@@ -12,13 +12,13 @@ import {
   Th,
   Td,
   AutomationNote,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { EntityDialog, RowAction, useDeleteRow, type EntityField } from "@/components/fin/forms";
 import { RunAutomationButton } from "@/components/fin/automation-button";
-import { cn } from "@/lib/utils";
 
 const PRODUCT_FIELDS: EntityField[] = [
   { key: "sku", label: "SKU", required: true },
@@ -132,18 +132,7 @@ function Inventory() {
       </div>
 
       <div className="flex items-center gap-2 border-b border-border pb-2">
-        {(["Stock", "Movements"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-sm px-2.5 py-1.5 text-[13px]",
-              tab === t ? "bg-secondary font-medium" : "text-muted-foreground hover:bg-secondary/60",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        <SegmentedTabs items={["Stock", "Movements"] as const} value={tab} onChange={setTab} label="Inventory sections" />
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
