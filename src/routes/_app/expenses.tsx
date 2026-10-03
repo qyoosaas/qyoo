@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/expenses")({
-  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Expenses · Qyoo · Autonomous Finance OS" },
@@ -47,7 +47,7 @@ function Expenses() {
 
   useEffect(() => {
     if (action === "new-expense") setAdding(true);
-    if (action) navigate({ search: { action: undefined }, replace: true });
+    if (action) navigate({ search: { action: "" }, replace: true });
   }, [action, navigate]);
 
   const catById = useMemo(() => {

@@ -186,9 +186,6 @@ function PurchaseOrderDetail() {
         subtitle={`${supplier.data?.name ?? "Supplier"} · ordered ${shortDate(po.data.order_date)} · expected ${shortDate(po.data.expected_date)}`}
         actions={
           <>
-            <Button size="sm" variant="ghost" onClick={() => navigate({ to: "/purchases" })}>
-              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Purchases
-            </Button>
             {po.data.status !== "cancelled" && !fullyReceived ? (
               <Button size="sm" variant="outline" onClick={() => setReceiveOpen(true)}>
                 <PackageCheck className="mr-1.5 h-3.5 w-3.5" /> Receive goods
@@ -356,7 +353,7 @@ function PurchaseOrderDetail() {
             <div className="text-muted-foreground">
               {supplier.data?.email ?? "No email"} · terms {supplier.data?.payment_terms_days ?? 30} days
             </div>
-            <Link to="/purchases" className="text-[12px] underline underline-offset-2">
+            <Link to="/purchases" search={{ action: "" }} className="text-[12px] underline underline-offset-2">
               Open supplier list
             </Link>
           </div>

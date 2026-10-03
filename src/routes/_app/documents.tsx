@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { humanError, logTechnical } from "@/lib/fin-errors";
 
 export const Route = createFileRoute("/_app/documents")({
-  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Documents · Qyoo · Autonomous Finance OS" },
@@ -85,7 +85,7 @@ function Inbox() {
 
   useEffect(() => {
     if (action === "upload") inputRef.current?.click();
-    if (action) navigate({ to: "/documents", search: { action: undefined }, replace: true });
+    if (action) navigate({ to: "/documents", search: { action: "" }, replace: true });
   }, [action, navigate]);
 
   const ingest = useMutation({

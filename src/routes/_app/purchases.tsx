@@ -21,7 +21,7 @@ import { Plus } from "lucide-react";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 
 export const Route = createFileRoute("/_app/purchases")({
-  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : "" }),
   head: () => ({
     meta: [
       { title: "Purchases · Qyoo · Autonomous Finance OS" },
@@ -78,7 +78,7 @@ function Purchases() {
   useEffect(() => {
     if (action === "new-po") setNewDoc("po");
     if (action === "new-bill") setNewDoc("bill");
-    if (action) navigate({ to: "/purchases", search: { action: undefined }, replace: true });
+    if (action) navigate({ to: "/purchases", search: { action: "" }, replace: true });
   }, [action, navigate]);
 
   const nameById = useMemo(() => {
