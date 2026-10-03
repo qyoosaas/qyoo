@@ -178,6 +178,7 @@ function SalesOrderDetail() {
     <>
       <PageHeader
         title={`Sales order ${so.data.number}`}
+        back={{ to: "/sales", label: "Sales" }}
         subtitle={`${customer.data?.name ?? "Customer"} · ordered ${shortDate(so.data.order_date)} · expected ${shortDate(so.data.expected_delivery)}`}
         actions={
           <>

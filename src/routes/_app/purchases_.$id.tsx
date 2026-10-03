@@ -183,6 +183,7 @@ function PurchaseOrderDetail() {
     <>
       <PageHeader
         title={`Purchase order ${po.data.number}`}
+        back={{ to: "/purchases", label: "Purchases" }}
         subtitle={`${supplier.data?.name ?? "Supplier"} · ordered ${shortDate(po.data.order_date)} · expected ${shortDate(po.data.expected_date)}`}
         actions={
           <>

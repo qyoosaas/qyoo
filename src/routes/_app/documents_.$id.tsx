@@ -400,13 +400,10 @@ function Review() {
     <>
       <PageHeader
         title={row.file_name}
+        back={{ to: "/documents", label: "Documents" }}
         subtitle={`${docTypeLabel(row.doc_type)} · ${STATUS_LABEL[row.status] ?? row.status} · uploaded ${shortDate(row.created_at)}`}
         actions={
           <>
-            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-[13px]" onClick={() => navigate({ to: "/documents", search: { action: "" } })}>
-              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Documents
-            </Button>
             <Button
               variant="outline"
               size="sm"

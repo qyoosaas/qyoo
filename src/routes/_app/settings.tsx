@@ -41,13 +41,15 @@ function Settings() {
   const save = async (s: any) => {
     const raw = drafts[s.id];
     if (raw == null) return;
-    let value: any;
-    try {
-      value = JSON.parse(raw);
-    } catch {
-      toast.error("Value must be valid JSON");
-      return;
+    const existing = s.value;
+    let value: any = raw;
+    if (typeof existing === "number") value = Number(raw);
+    else if (typeof existing === "boolean") value = raw === "true";
+    else if (Array.isArray(existing)) value = raw.split(",").map((item) => item.trim()).filter(Boolean);
+    else if (existing && typeof existing === "object") {
+      try { value = JSON.parse(raw); } catch { toast.error("Enter a valid value"); return; }
     }
+    if (typeof existing === "number" && !Number.isFinite(value)) { toast.error("Enter a valid number"); return; }
     const { error } = await supabase.from("settings").update({ value }).eq("id", s.id);
     if (error) {
       toast.error(error.message);
@@ -119,11 +121,22 @@ function Settings() {
                     <div className="text-[13px] font-medium">{s.label}</div>
                     <div className="text-xs text-muted-foreground">{s.description ?? s.key}</div>
                   </div>
-                  <Input
-                    value={drafts[s.id] ?? JSON.stringify(s.value)}
-                    onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
-                    className="num h-8 text-[12px]"
-                  />
+                  {typeof s.value === "boolean" ? (
+                    <select
+                      value={drafts[s.id] ?? String(s.value)}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+                      className="h-8 rounded-md border border-input bg-background px-3 text-[12px]"
+                    >
+                      <option value="true">Enabled</option><option value="false">Disabled</option>
+                    </select>
+                  ) : (
+                    <Input
+                      type={typeof s.value === "number" ? "number" : "text"}
+                      value={drafts[s.id] ?? (Array.isArray(s.value) ? s.value.join(", ") : typeof s.value === "object" ? JSON.stringify(s.value) : String(s.value ?? ""))}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+                      className="h-8 text-[12px]"
+                    />
+                  )}
                   <Button size="sm" variant="outline" disabled={drafts[s.id] == null} onClick={() => save(s)}>
                     Save
                   </Button>
