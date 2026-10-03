@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { humanError, logTechnical } from "@/lib/fin-errors";
 
 export const Route = createFileRoute("/_app/documents")({
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search.action === "string" ? search.action : undefined }),
   head: () => ({
     meta: [
       { title: "Documents · Qyoo · Autonomous Finance OS" },
@@ -70,6 +71,7 @@ export function useDocumentUploads() {
 }
 
 function Inbox() {
+  const { action } = Route.useSearch();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const uploads = useDocumentUploads();
@@ -80,6 +82,11 @@ function Inbox() {
   const [term, setTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    if (action === "upload") inputRef.current?.click();
+    if (action) navigate({ to: "/documents", search: {}, replace: true });
+  }, [action, navigate]);
 
   const ingest = useMutation({
     mutationFn: async (files: File[]) => {

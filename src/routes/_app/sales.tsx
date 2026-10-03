@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
 import { actions, useAction } from "@/lib/fin-actions";
@@ -16,13 +16,14 @@ import {
   Td,
   statusTone,
   AutomationNote,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/sales")({
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search.action === "string" ? search.action : undefined }),
   head: () => ({
     meta: [
       { title: "Sales · Qyoo · Autonomous Finance OS" },
@@ -72,6 +73,7 @@ const CUSTOMER_FIELDS: EntityField[] = [
 ];
 
 function Sales() {
+  const { action } = Route.useSearch();
   const invoices = useTable<any>("invoices", ["s"], (q: any) => q.order("invoice_date", { ascending: false }).order("number", { ascending: false }));
   const orders = useTable<any>("sales_orders", ["s"], (q: any) => q.order("order_date", { ascending: false }));
   const deliveries = useTable<any>("delivery_notes", ["s"], (q: any) => q.order("delivery_date", { ascending: false }));
@@ -88,6 +90,12 @@ function Sales() {
   const { askVoid, dialog: voidDialog } = useVoid();
   const { askDelete, dialog: delDialog } = useDeleteRow("customers", "Customer");
   const postDraft = useAction((id: string) => actions.postDraftInvoice(id), { success: "Invoice posted" });
+
+  useEffect(() => {
+    if (action === "new-invoice") setNewInvoice(true);
+    if (action === "new-order") setNewOrder(true);
+    if (action) navigate({ to: "/sales", search: {}, replace: true });
+  }, [action, navigate]);
 
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -172,18 +180,7 @@ function Sales() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-sm px-2.5 py-1.5 text-[13px]",
-              tab === t ? "bg-secondary font-medium text-foreground" : "text-muted-foreground hover:bg-secondary/60",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        <SegmentedTabs items={TABS} value={tab} onChange={setTab} label="Sales sections" />
         <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Filter…" className="ml-auto h-8 w-[220px] text-[13px]" />
       </div>
 
