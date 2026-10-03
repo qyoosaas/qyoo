@@ -25,7 +25,7 @@ import { actions, useAction, isoToday } from "@/lib/fin-actions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/banking")({
-  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : undefined }),
+  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
   head: () => ({
     meta: [
       { title: "Banking · Qyoo · Autonomous Finance OS" },

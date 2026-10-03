@@ -21,7 +21,7 @@ import { Plus } from "lucide-react";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 
 export const Route = createFileRoute("/_app/purchases")({
-  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : undefined }),
+  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
   head: () => ({
     meta: [
       { title: "Purchases · Qyoo · Autonomous Finance OS" },

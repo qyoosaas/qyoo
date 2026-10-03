@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { humanError, logTechnical } from "@/lib/fin-errors";
 
 export const Route = createFileRoute("/_app/documents")({
-  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : undefined }),
+  validateSearch: (search: Record<string, unknown>) => typeof search['action'] === "string" ? { action: search['action'] } : {},
   head: () => ({
     meta: [
       { title: "Documents · Qyoo · Autonomous Finance OS" },
