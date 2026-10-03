@@ -16,9 +16,9 @@ import {
   Th,
   Td,
   AutomationNote,
+  SegmentedTabs,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/accounting")({
   head: () => ({
@@ -101,18 +101,7 @@ function Accounting() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "rounded-sm px-2.5 py-1.5 text-[13px]",
-              tab === t ? "bg-secondary font-medium" : "text-muted-foreground hover:bg-secondary/60",
-            )}
-          >
-            {t}
-          </button>
-        ))}
+        <SegmentedTabs items={TABS} value={tab} onChange={setTab} label="Accounting sections" />
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
