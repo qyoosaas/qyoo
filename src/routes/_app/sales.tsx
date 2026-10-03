@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/sales")({
-  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search.action === "string" ? search.action : undefined }),
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : undefined }),
   head: () => ({
     meta: [
       { title: "Sales · Qyoo · Autonomous Finance OS" },
@@ -94,7 +94,7 @@ function Sales() {
   useEffect(() => {
     if (action === "new-invoice") setNewInvoice(true);
     if (action === "new-order") setNewOrder(true);
-    if (action) navigate({ to: "/sales", search: {}, replace: true });
+    if (action) navigate({ to: "/sales", search: { action: undefined }, replace: true });
   }, [action, navigate]);
 
   const nameById = useMemo(() => {

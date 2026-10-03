@@ -25,7 +25,7 @@ import { actions, useAction, isoToday } from "@/lib/fin-actions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/banking")({
-  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search.action === "string" ? search.action : undefined }),
+  validateSearch: (search: Record<string, unknown>) => ({ action: typeof search['action'] === "string" ? search['action'] : undefined }),
   head: () => ({
     meta: [
       { title: "Banking · Qyoo · Autonomous Finance OS" },
@@ -168,7 +168,7 @@ function Banking() {
   useEffect(() => {
     if (action === "import") setImportOpen(true);
     if (action === "reconcile") setReconcileOpen(true);
-    if (action) navigate({ search: {}, replace: true });
+    if (action) navigate({ search: { action: undefined }, replace: true });
   }, [action, navigate]);
 
   const allocate = useAction(
