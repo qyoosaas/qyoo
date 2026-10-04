@@ -8,6 +8,7 @@ import { money, pct, daysBetween } from "@/lib/format";
 import { PageHeader, Panel, Loading, TableShell, Th, Td, AutomationNote, Metric, SegmentedTabs } from "@/components/fin/primitives";
 import { PeriodPicker, presetPeriods, periodCaption, type Period } from "@/components/fin/period-picker";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/reports")({
   head: () => ({
