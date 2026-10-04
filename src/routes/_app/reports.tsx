@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
 import { actions } from "@/lib/fin-actions";
 import { money, pct, daysBetween } from "@/lib/format";
-import { PageHeader, Panel, Loading, TableShell, Th, Td, AutomationNote, Metric } from "@/components/fin/primitives";
+import { PageHeader, Panel, Loading, TableShell, Th, Td, AutomationNote, Metric, SegmentedTabs } from "@/components/fin/primitives";
 import { PeriodPicker, presetPeriods, periodCaption, type Period } from "@/components/fin/period-picker";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -193,20 +193,7 @@ function Reports() {
       </AutomationNote>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-2">
-        <div className="flex flex-wrap gap-1">
-          {REPORTS.map((r) => (
-            <button
-              key={r}
-              onClick={() => setReport(r)}
-              className={cn(
-                "rounded-sm px-2.5 py-1.5 text-[13px]",
-                report === r ? "bg-secondary font-medium" : "text-muted-foreground hover:bg-secondary/60",
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        <SegmentedTabs items={REPORTS} value={report} onChange={setReport} label="Financial report" />
         <PeriodPicker value={period} onChange={setPeriod} />
       </div>
 

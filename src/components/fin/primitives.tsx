@@ -26,12 +26,12 @@ export function PageHeader({
           <ArrowLeft className="h-3.5 w-3.5" /> Back to {back.label}
         </Link>
       ) : null}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="min-w-0">
         <h1 className="truncate text-[22px] font-medium text-foreground">{title}</h1>
         {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
         </div>
-        {actions ? <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{actions}</div> : null}
+        {actions ? <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">{actions}</div> : null}
       </div>
     </div>
   );
