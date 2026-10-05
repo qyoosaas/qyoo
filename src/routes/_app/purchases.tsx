@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable } from "@/lib/fin-data";
 import { money, shortDate, titleCase, daysBetween } from "@/lib/format";
@@ -256,14 +256,7 @@ function Purchases() {
                     onClick={() => navigate({ to: "/purchases/$id", params: { id: o.id } })}
                   >
                     <Td>
-                      <Link
-                        to="/purchases/$id"
-                        params={{ id: o.id }}
-                        className="num font-medium underline-offset-2 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {o.number}
-                      </Link>
+                      <span className="num font-medium">{o.number}</span>
                     </Td>
                     <Td>{nameById.get(o.supplier_id) ?? "—"}</Td>
                     <Td>{shortDate(o.order_date)}</Td>

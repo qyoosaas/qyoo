@@ -319,11 +319,13 @@ function SalesOrderDetail() {
             </thead>
             <tbody>
               {(invoices.data ?? []).map((i: any) => (
-                <tr key={i.id} className="row-hover hover:bg-secondary/40">
+                <tr
+                  key={i.id}
+                  className="row-hover cursor-pointer hover:bg-secondary/40"
+                  onClick={() => navigate({ to: "/invoices/$id", params: { id: i.id } })}
+                >
                   <Td>
-                    <Link to="/invoices/$id" params={{ id: i.id }} className="num font-medium underline-offset-4 hover:underline">
-                      {i.number}
-                    </Link>
+                    <span className="num font-medium">{i.number}</span>
                   </Td>
                   <Td>{shortDate(i.invoice_date)}</Td>
                   <Td right>{money(i.total)}</Td>
