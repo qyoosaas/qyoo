@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import { useTable } from "@/lib/fin-data";
@@ -208,11 +208,13 @@ function Sales() {
                 .map((i: any) => {
                   const late = Number(i.balance) > 0 && i.status !== "cancelled" && daysBetween(i.due_date, new Date()) > 0;
                   return (
-                    <tr key={i.id} className="row-hover hover:bg-secondary/40">
+                    <tr
+                      key={i.id}
+                      className="row-hover cursor-pointer hover:bg-secondary/40"
+                      onClick={() => navigate({ to: "/invoices/$id", params: { id: i.id } })}
+                    >
                       <Td>
-                        <Link to="/invoices/$id" params={{ id: i.id }} className="num font-medium underline-offset-4 hover:underline">
-                          {i.number}
-                        </Link>
+                        <span className="num font-medium">{i.number}</span>
                       </Td>
                       <Td>{nameById.get(i.customer_id) ?? "—"}</Td>
                       <Td>{shortDate(i.invoice_date)}</Td>
@@ -270,14 +272,7 @@ function Sales() {
                     onClick={() => navigate({ to: "/sales/$id", params: { id: o.id } })}
                   >
                     <Td>
-                      <Link
-                        to="/sales/$id"
-                        params={{ id: o.id }}
-                        className="num font-medium underline-offset-2 hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {o.number}
-                      </Link>
+                      <span className="num font-medium">{o.number}</span>
                     </Td>
 
                     <Td>{nameById.get(o.customer_id) ?? "—"}</Td>

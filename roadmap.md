@@ -13,5 +13,6 @@
 - [x] Add a usable mobile app shell and replace raw settings data with clear business controls
 - [x] Verify all public-facing routes and representative workflows on desktop and mobile without changing accounting logic
 - [x] Make command search actions open their intended form or workflow immediately after navigation
+- [x] Replace code-style settings values with business controls and standardize openable records as full-row pointer targets
 - [ ] Swap the local heuristic reader for the self-hosted PaddleOCR / PP-StructureV3 / Docling service (set DOC_AI_URL when it is running)
 - [ ] Remove leftover QA test data (bank lines "QA STATEMENT TEST", uploaded statement.csv) when the user confirms

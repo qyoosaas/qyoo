@@ -9,6 +9,111 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+type SettingValue = string | number | boolean | string[] | Record<string, unknown>;
+
+const FIELD_LABELS: Record<string, string> = {
+  amount: "Amount (AED)",
+  percent: "Percentage",
+  currency: "Currency",
+  enabled: "Requirement",
+  above: "Required above (AED)",
+  code: "Tax code",
+  rate: "Rate",
+  period: "Frequency",
+  method: "Method",
+  start: "Starts",
+  end: "Ends",
+  email: "Email alerts",
+  digest: "Digest frequency",
+};
+
+const OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
+  currency: [{ value: "AED", label: "AED — UAE dirham" }],
+  period: [
+    { value: "monthly", label: "Monthly" },
+    { value: "quarterly", label: "Quarterly" },
+    { value: "annually", label: "Annually" },
+  ],
+  method: [
+    { value: "weighted_average", label: "Weighted average" },
+    { value: "fifo", label: "First in, first out" },
+  ],
+  digest: [
+    { value: "immediate", label: "Immediately" },
+    { value: "daily", label: "Daily digest" },
+    { value: "weekly", label: "Weekly digest" },
+  ],
+};
+
+function settingValue(setting: any, drafts: Record<string, SettingValue>): SettingValue {
+  return drafts[setting.id] ?? setting.value;
+}
+
+function SettingControl({
+  setting,
+  drafts,
+  setDrafts,
+}: {
+  setting: any;
+  drafts: Record<string, SettingValue>;
+  setDrafts: React.Dispatch<React.SetStateAction<Record<string, SettingValue>>>;
+}) {
+  const value = settingValue(setting, drafts);
+  const setValue = (next: SettingValue) => setDrafts((current) => ({ ...current, [setting.id]: next }));
+
+  if (typeof value === "boolean") {
+    return (
+      <select value={String(value)} onChange={(event) => setValue(event.target.value === "true")} className="h-8 rounded-md border border-input bg-background px-3 text-[12px]">
+        <option value="true">Enabled</option>
+        <option value="false">Disabled</option>
+      </select>
+    );
+  }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return (
+      <div className="grid gap-2 sm:grid-cols-2">
+        {Object.entries(value).map(([key, fieldValue]) => {
+          const update = (next: unknown) => setValue({ ...value, [key]: next });
+          const options = OPTIONS[key];
+          const isDate = key === "start" || key === "end";
+          const isPercentageRate = key === "rate";
+          return (
+            <label key={key} className="space-y-1">
+              <span className="text-[11px] text-muted-foreground">{FIELD_LABELS[key] ?? titleCase(key)}</span>
+              {typeof fieldValue === "boolean" ? (
+                <select value={String(fieldValue)} onChange={(event) => update(event.target.value === "true")} className="h-8 w-full rounded-md border border-input bg-background px-3 text-[12px]">
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              ) : options ? (
+                <select value={String(fieldValue)} onChange={(event) => update(event.target.value)} className="h-8 w-full rounded-md border border-input bg-background px-3 text-[12px]">
+                  {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              ) : (
+                <Input
+                  type={isDate ? "date" : typeof fieldValue === "number" ? "number" : "text"}
+                  min={typeof fieldValue === "number" ? 0 : undefined}
+                  step={key === "percent" || isPercentageRate ? 0.01 : undefined}
+                  value={isPercentageRate && typeof fieldValue === "number" ? fieldValue * 100 : String(fieldValue ?? "")}
+                  onChange={(event) => update(typeof fieldValue === "number" ? Number(event.target.value) / (isPercentageRate ? 100 : 1) : event.target.value)}
+                  className="h-8 text-[12px]"
+                />
+              )}
+            </label>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (Array.isArray(value)) {
+    return <Input value={value.join(", ")} onChange={(event) => setValue(event.target.value.split(",").map((item) => item.trim()).filter(Boolean))} className="h-8 text-[12px]" />;
+  }
+
+  return <Input type={typeof value === "number" ? "number" : "text"} value={String(value ?? "")} onChange={(event) => setValue(typeof value === "number" ? Number(event.target.value) : event.target.value)} className="h-8 text-[12px]" />;
+}
+
 export const Route = createFileRoute("/_app/settings")({
   head: () => ({
     meta: [
@@ -31,7 +136,7 @@ function Settings() {
   const settings = useTable<any>("settings", ["st"], (q: any) => q.order("group_name"));
   const roles = useTable<any>("profiles", ["st"]);
   const tax = useTable<any>("tax_rates", ["st"]);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, SettingValue>>({});
 
   const groups = new Map<string, any[]>();
   (settings.data ?? []).forEach((s: any) => {
@@ -39,17 +144,8 @@ function Settings() {
   });
 
   const save = async (s: any) => {
-    const raw = drafts[s.id];
-    if (raw == null) return;
-    const existing = s.value;
-    let value: any = raw;
-    if (typeof existing === "number") value = Number(raw);
-    else if (typeof existing === "boolean") value = raw === "true";
-    else if (Array.isArray(existing)) value = raw.split(",").map((item) => item.trim()).filter(Boolean);
-    else if (existing && typeof existing === "object") {
-      try { value = JSON.parse(raw); } catch { toast.error("Enter a valid value"); return; }
-    }
-    if (typeof existing === "number" && !Number.isFinite(value)) { toast.error("Enter a valid number"); return; }
+    const value = drafts[s.id];
+    if (value == null) return;
     const { error } = await supabase.from("settings").update({ value }).eq("id", s.id);
     if (error) {
       toast.error(error.message);
@@ -116,27 +212,12 @@ function Settings() {
           <Panel key={group} title={titleCase(group)}>
             <ul className="divide-y divide-border">
               {items.map((s: any) => (
-                <li key={s.id} className="grid gap-3 px-4 py-3 md:grid-cols-[1fr_320px_auto]">
+                <li key={s.id} className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(180px,1fr)_minmax(320px,1.2fr)_auto] md:items-end">
                   <div>
                     <div className="text-[13px] font-medium">{s.label}</div>
                     <div className="text-xs text-muted-foreground">{s.description ?? s.key}</div>
                   </div>
-                  {typeof s.value === "boolean" ? (
-                    <select
-                      value={drafts[s.id] ?? String(s.value)}
-                      onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
-                      className="h-8 rounded-md border border-input bg-background px-3 text-[12px]"
-                    >
-                      <option value="true">Enabled</option><option value="false">Disabled</option>
-                    </select>
-                  ) : (
-                    <Input
-                      type={typeof s.value === "number" ? "number" : "text"}
-                      value={drafts[s.id] ?? (Array.isArray(s.value) ? s.value.join(", ") : typeof s.value === "object" ? JSON.stringify(s.value) : String(s.value ?? ""))}
-                      onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
-                      className="h-8 text-[12px]"
-                    />
-                  )}
+                  <SettingControl setting={s} drafts={drafts} setDrafts={setDrafts} />
                   <Button size="sm" variant="outline" disabled={drafts[s.id] == null} onClick={() => save(s)}>
                     Save
                   </Button>

@@ -299,7 +299,7 @@ export function ErrorState({
 
 export function DetailLink({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1 font-medium underline-offset-4 group-hover:underline">
+    <span className="inline-flex items-center gap-1 font-medium">
       {children}<ChevronRight className="h-3 w-3 text-muted-foreground" />
     </span>
   );
