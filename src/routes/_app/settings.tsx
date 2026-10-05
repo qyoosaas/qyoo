@@ -8,8 +8,9 @@ import { PageHeader, Panel, Loading, AutomationNote, Pill } from "@/components/f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
-type SettingValue = string | number | boolean | string[] | Record<string, unknown>;
+type SettingValue = Json;
 
 const FIELD_LABELS: Record<string, string> = {
   amount: "Amount (AED)",
