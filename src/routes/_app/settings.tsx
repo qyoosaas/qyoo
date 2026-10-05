@@ -75,7 +75,7 @@ function SettingControl({
     return (
       <div className="grid gap-2 sm:grid-cols-2">
         {Object.entries(value).map(([key, fieldValue]) => {
-          const update = (next: unknown) => setValue({ ...value, [key]: next });
+          const update = (next: Json) => setValue({ ...value, [key]: next });
           const options = OPTIONS[key];
           const isDate = key === "start" || key === "end";
           const isPercentageRate = key === "rate";
