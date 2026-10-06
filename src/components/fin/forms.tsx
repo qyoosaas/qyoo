@@ -157,8 +157,8 @@ export function ConfirmDialog({
 
 /* ---------- line items ---------- */
 
-type Line = LineInput & { key: number };
-const newLine = (n: number): Line => ({ key: n, product_id: "", description: "", quantity: 1, unit_price: 0, discount: 0, vat_rate: 0.05 });
+export type Line = LineInput & { key: number };
+export const newLine = (n: number): Line => ({ key: n, product_id: "", description: "", quantity: 1, unit_price: 0, discount: 0, vat_rate: 0.05 });
 
 export function LineItemsEditor({
   lines,
