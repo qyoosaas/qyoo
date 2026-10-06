@@ -163,8 +163,9 @@ export const actions = {
       p_bank_account: p.bank_account_id ?? null,
       p_reference: p.reference ?? null,
     }),
-  createExpense: (p: { merchant: string; date: string; gross: number; category_id?: string | null; employee?: string | null; method?: string; has_document?: boolean; project?: string | null; bank_account_id?: string | null }) =>
+  createExpense: (p: { merchant: string; date: string; gross: number; category_id?: string | null; employee?: string | null; method?: string; has_document?: boolean; project?: string | null; bank_account_id?: string | null; tax_rate_id?: string | null }) =>
     rpc<string>("create_expense", {
+      p_tax_rate: p.tax_rate_id ?? null,
       p_company: COMPANY_ID,
       p_merchant: p.merchant,
       p_date: p.date,
@@ -175,6 +176,16 @@ export const actions = {
       p_has_document: p.has_document ?? false,
       p_project: p.project ?? null,
       p_bank_account: p.bank_account_id ?? null,
+    }),
+  createCreditNote: (p: { kind: "sales_credit" | "purchase_debit"; party_id: string; doc_id?: string | null; date: string; reason?: string; items: LineInput[] }) =>
+    rpc<string>("create_credit_note", {
+      p_company: COMPANY_ID,
+      p_kind: p.kind,
+      p_party: p.party_id,
+      p_doc: p.doc_id ?? null,
+      p_date: p.date,
+      p_reason: p.reason ?? null,
+      p_items: p.items,
     }),
   voidDocument: (type: "invoice" | "supplier_bill" | "expense" | "purchase_order", id: string, reason?: string) =>
     rpc<void>("void_document", { p_type: type, p_id: id, p_reason: reason ?? "Voided by user" }),
