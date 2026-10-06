@@ -565,6 +565,147 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_note_items: {
+        Row: {
+          credit_note_id: string
+          description: string | null
+          id: string
+          line_total: number
+          product_id: string | null
+          quantity: number
+          unit_price: number
+          vat_rate: number
+        }
+        Insert: {
+          credit_note_id: string
+          description?: string | null
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+          vat_rate?: number
+        }
+        Update: {
+          credit_note_id?: string
+          description?: string | null
+          id?: string
+          line_total?: number
+          product_id?: string | null
+          quantity?: number
+          unit_price?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_items_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          applied: number
+          company_id: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          kind: string
+          note_date: string
+          number: string
+          reason: string | null
+          status: string
+          subtotal: number
+          supplier_bill_id: string | null
+          supplier_id: string | null
+          total: number
+          vat: number
+        }
+        Insert: {
+          applied?: number
+          company_id: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          note_date: string
+          number: string
+          reason?: string | null
+          status?: string
+          subtotal?: number
+          supplier_bill_id?: string | null
+          supplier_id?: string | null
+          total?: number
+          vat?: number
+        }
+        Update: {
+          applied?: number
+          company_id?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          note_date?: string
+          number?: string
+          reason?: string | null
+          status?: string
+          subtotal?: number
+          supplier_bill_id?: string | null
+          supplier_id?: string | null
+          total?: number
+          vat?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_supplier_bill_id_fkey"
+            columns: ["supplier_bill_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_payments: {
         Row: {
           amount: number
@@ -1224,7 +1365,9 @@ export type Database = {
           project: string | null
           source: string
           status: string
+          tax_code: string
           vat: number
+          vat_rate: number
         }
         Insert: {
           amount: number
@@ -1241,7 +1384,9 @@ export type Database = {
           project?: string | null
           source?: string
           status?: string
+          tax_code?: string
           vat?: number
+          vat_rate?: number
         }
         Update: {
           amount?: number
@@ -1258,7 +1403,9 @@ export type Database = {
           project?: string | null
           source?: string
           status?: string
+          tax_code?: string
           vat?: number
+          vat_rate?: number
         }
         Relationships: [
           {
@@ -2744,6 +2891,18 @@ export type Database = {
         Returns: Json
       }
       automation_selftest: { Args: never; Returns: Json }
+      create_credit_note: {
+        Args: {
+          p_company: string
+          p_date: string
+          p_doc: string
+          p_items: Json
+          p_kind: string
+          p_party: string
+          p_reason: string
+        }
+        Returns: string
+      }
       create_expense: {
         Args: {
           p_bank_account?: string
@@ -2756,6 +2915,7 @@ export type Database = {
           p_merchant: string
           p_method?: string
           p_project?: string
+          p_tax_rate?: string
         }
         Returns: string
       }
