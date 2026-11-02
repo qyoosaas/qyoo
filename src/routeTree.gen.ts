@@ -25,11 +25,14 @@ import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
 import { Route as AppReportsRouteImport } from './routes/_app/reports'
 import { Route as AppSalesRouteImport } from './routes/_app/sales'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppAccountingCodeRouteImport } from './routes/_app/accounting_.$code'
 import { Route as AppDocumentsIdRouteImport } from './routes/_app/documents_.$id'
 import { Route as AppInvoicesIdRouteImport } from './routes/_app/invoices.$id'
+import { Route as AppNotesIdRouteImport } from './routes/_app/notes.$id'
 import { Route as AppPurchasesIdRouteImport } from './routes/_app/purchases_.$id'
 import { Route as AppSalesIdRouteImport } from './routes/_app/sales_.$id'
 import { Route as AppDocsTypeIdRouteImport } from './routes/_app/docs.$type.$id'
+import { Route as AppStatementPartyIdRouteImport } from './routes/_app/statement.$party.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -110,6 +113,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountingCodeRoute = AppAccountingCodeRouteImport.update({
+  id: '/accounting_/$code',
+  path: '/accounting/$code',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDocumentsIdRoute = AppDocumentsIdRouteImport.update({
   id: '/documents_/$id',
   path: '/documents/$id',
@@ -118,6 +126,11 @@ const AppDocumentsIdRoute = AppDocumentsIdRouteImport.update({
 const AppInvoicesIdRoute = AppInvoicesIdRouteImport.update({
   id: '/invoices/$id',
   path: '/invoices/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotesIdRoute = AppNotesIdRouteImport.update({
+  id: '/notes/$id',
+  path: '/notes/$id',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPurchasesIdRoute = AppPurchasesIdRouteImport.update({
@@ -133,6 +146,11 @@ const AppSalesIdRoute = AppSalesIdRouteImport.update({
 const AppDocsTypeIdRoute = AppDocsTypeIdRouteImport.update({
   id: '/docs/$type/$id',
   path: '/docs/$type/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStatementPartyIdRoute = AppStatementPartyIdRouteImport.update({
+  id: '/statement/$party/$id',
+  path: '/statement/$party/$id',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -152,11 +170,14 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
+  '/accounting/$code': typeof AppAccountingCodeRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
+  '/notes/$id': typeof AppNotesIdRoute
   '/purchases/$id': typeof AppPurchasesIdRoute
   '/sales/$id': typeof AppSalesIdRoute
   '/docs/$type/$id': typeof AppDocsTypeIdRoute
+  '/statement/$party/$id': typeof AppStatementPartyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -174,11 +195,14 @@ export interface FileRoutesByTo {
   '/reports': typeof AppReportsRoute
   '/sales': typeof AppSalesRoute
   '/settings': typeof AppSettingsRoute
+  '/accounting/$code': typeof AppAccountingCodeRoute
   '/documents/$id': typeof AppDocumentsIdRoute
   '/invoices/$id': typeof AppInvoicesIdRoute
+  '/notes/$id': typeof AppNotesIdRoute
   '/purchases/$id': typeof AppPurchasesIdRoute
   '/sales/$id': typeof AppSalesIdRoute
   '/docs/$type/$id': typeof AppDocsTypeIdRoute
+  '/statement/$party/$id': typeof AppStatementPartyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -198,11 +222,14 @@ export interface FileRoutesById {
   '/_app/reports': typeof AppReportsRoute
   '/_app/sales': typeof AppSalesRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/accounting_/$code': typeof AppAccountingCodeRoute
   '/_app/documents_/$id': typeof AppDocumentsIdRoute
   '/_app/invoices/$id': typeof AppInvoicesIdRoute
+  '/_app/notes/$id': typeof AppNotesIdRoute
   '/_app/purchases_/$id': typeof AppPurchasesIdRoute
   '/_app/sales_/$id': typeof AppSalesIdRoute
   '/_app/docs/$type/$id': typeof AppDocsTypeIdRoute
+  '/_app/statement/$party/$id': typeof AppStatementPartyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -222,11 +249,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/accounting/$code'
     | '/documents/$id'
     | '/invoices/$id'
+    | '/notes/$id'
     | '/purchases/$id'
     | '/sales/$id'
     | '/docs/$type/$id'
+    | '/statement/$party/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -244,11 +274,14 @@ export interface FileRouteTypes {
     | '/reports'
     | '/sales'
     | '/settings'
+    | '/accounting/$code'
     | '/documents/$id'
     | '/invoices/$id'
+    | '/notes/$id'
     | '/purchases/$id'
     | '/sales/$id'
     | '/docs/$type/$id'
+    | '/statement/$party/$id'
   id:
     | '__root__'
     | '/'
@@ -267,11 +300,14 @@ export interface FileRouteTypes {
     | '/_app/reports'
     | '/_app/sales'
     | '/_app/settings'
+    | '/_app/accounting_/$code'
     | '/_app/documents_/$id'
     | '/_app/invoices/$id'
+    | '/_app/notes/$id'
     | '/_app/purchases_/$id'
     | '/_app/sales_/$id'
     | '/_app/docs/$type/$id'
+    | '/_app/statement/$party/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -394,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounting_/$code': {
+      id: '/_app/accounting_/$code'
+      path: '/accounting/$code'
+      fullPath: '/accounting/$code'
+      preLoaderRoute: typeof AppAccountingCodeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/documents_/$id': {
       id: '/_app/documents_/$id'
       path: '/documents/$id'
@@ -406,6 +449,13 @@ declare module '@tanstack/react-router' {
       path: '/invoices/$id'
       fullPath: '/invoices/$id'
       preLoaderRoute: typeof AppInvoicesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notes/$id': {
+      id: '/_app/notes/$id'
+      path: '/notes/$id'
+      fullPath: '/notes/$id'
+      preLoaderRoute: typeof AppNotesIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/purchases_/$id': {
@@ -429,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDocsTypeIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/statement/$party/$id': {
+      id: '/_app/statement/$party/$id'
+      path: '/statement/$party/$id'
+      fullPath: '/statement/$party/$id'
+      preLoaderRoute: typeof AppStatementPartyIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -446,11 +503,14 @@ interface AppRouteChildren {
   AppReportsRoute: typeof AppReportsRoute
   AppSalesRoute: typeof AppSalesRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppAccountingCodeRoute: typeof AppAccountingCodeRoute
   AppDocumentsIdRoute: typeof AppDocumentsIdRoute
   AppInvoicesIdRoute: typeof AppInvoicesIdRoute
+  AppNotesIdRoute: typeof AppNotesIdRoute
   AppPurchasesIdRoute: typeof AppPurchasesIdRoute
   AppSalesIdRoute: typeof AppSalesIdRoute
   AppDocsTypeIdRoute: typeof AppDocsTypeIdRoute
+  AppStatementPartyIdRoute: typeof AppStatementPartyIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -467,11 +527,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppReportsRoute: AppReportsRoute,
   AppSalesRoute: AppSalesRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppAccountingCodeRoute: AppAccountingCodeRoute,
   AppDocumentsIdRoute: AppDocumentsIdRoute,
   AppInvoicesIdRoute: AppInvoicesIdRoute,
+  AppNotesIdRoute: AppNotesIdRoute,
   AppPurchasesIdRoute: AppPurchasesIdRoute,
   AppSalesIdRoute: AppSalesIdRoute,
   AppDocsTypeIdRoute: AppDocsTypeIdRoute,
+  AppStatementPartyIdRoute: AppStatementPartyIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ export const Route = createFileRoute("/_app/accounting")({
 const TABS = ["Journal", "Trial balance", "Chart of accounts", "Periods"] as const;
 
 function Accounting() {
+  const navigate = useNavigate();
   const entries = useTable<any>("journal_entries", ["a"], (q: any) =>
     q.order("entry_date", { ascending: false }).limit(200),
   );
@@ -194,7 +195,7 @@ function Accounting() {
             </thead>
             <tbody>
               {tb.map((r) => (
-                <tr key={r.code}>
+                <tr key={r.code} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/accounting/$code", params: { code: r.code } })}>
                   <Td>
                     <span className="num">{r.code}</span>
                   </Td>
@@ -229,7 +230,7 @@ function Accounting() {
               {(accounts.data ?? [])
                 .filter((a: any) => a.name.toLowerCase().includes(term.toLowerCase()) || a.code.includes(term))
                 .map((a: any) => (
-                  <tr key={a.id}>
+                  <tr key={a.id} className={a.is_group ? undefined : "row-hover cursor-pointer hover:bg-secondary/40"} onClick={a.is_group ? undefined : () => navigate({ to: "/accounting/$code", params: { code: a.code } })}>
                     <Td>
                       <span className="num">{a.code}</span>
                     </Td>
