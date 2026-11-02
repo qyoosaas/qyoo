@@ -20,6 +20,7 @@ import {
 } from "@/components/fin/primitives";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
+import { CreditNoteDialog } from "@/components/fin/credit-note-dialog";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/sales")({
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/_app/sales")({
   component: Sales,
 });
 
-const TABS = ["Invoices", "Orders", "Delivery notes", "Receipts", "Customers", "Ageing"] as const;
+const TABS = ["Invoices", "Orders", "Delivery notes", "Receipts", "Credit notes", "Customers", "Ageing"] as const;
 
 const AGEING_BUCKETS = [
   { label: "Current", min: -99999, max: 0 },
@@ -85,6 +86,8 @@ function Sales() {
   const [newInvoice, setNewInvoice] = useState(false);
   const [newOrder, setNewOrder] = useState(false);
   const [payDoc, setPayDoc] = useState<any | null>(null);
+  const [credit, setCredit] = useState<{ party_id: string; doc_id: string } | null | false>(false);
+  const notes = useTable<any>("credit_notes", ["s"], (q: any) => q.eq("kind", "sales_credit").order("note_date", { ascending: false }));
 
   const [custRow, setCustRow] = useState<any | null>(null);
   const { askVoid, dialog: voidDialog } = useVoid();
@@ -235,6 +238,9 @@ function Sales() {
                           {Number(i.balance) > 0 && i.status !== "draft" && i.status !== "cancelled" ? (
                             <RowAction onClick={() => setPayDoc(i)}>Receive</RowAction>
                           ) : null}
+                          {i.status !== "draft" && i.status !== "cancelled" ? (
+                            <RowAction onClick={() => setCredit({ party_id: i.customer_id, doc_id: i.id })}>Credit</RowAction>
+                          ) : null}
                           {i.status !== "cancelled" ? (
                             <RowAction tone="danger" onClick={() => askVoid({ type: "invoice", id: i.id, label: i.number })}>
                               Void
@@ -367,6 +373,39 @@ function Sales() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Credit notes" ? (
+        <Panel
+          title="Credit notes"
+          actions={
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-[12px]" onClick={() => setCredit(null)}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> New credit note
+            </Button>
+          }
+        >
+          {!(notes.data ?? []).length ? (
+            <EmptyState title="No credit notes yet" hint="Raise one here or from an invoice's Credit action." />
+          ) : (
+            <TableShell>
+              <thead>
+                <tr><Th>Credit note</Th><Th>Customer</Th><Th>Date</Th><Th>Reason</Th><Th right>Total</Th><Th right>Applied</Th></tr>
+              </thead>
+              <tbody>
+                {(notes.data ?? [])
+                  .filter((n: any) => filter(n.number) || filter(nameById.get(n.customer_id) ?? ""))
+                  .map((n: any) => (
+                    <tr key={n.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/notes/$id", params: { id: n.id } })}>
+                      <Td><span className="num font-medium">{n.number}</span></Td>
+                      <Td>{nameById.get(n.customer_id) ?? "—"}</Td>
+                      <Td>{shortDate(n.note_date)}</Td>
+                      <Td className="max-w-[260px] truncate text-muted-foreground">{n.reason ?? "—"}</Td>
+                      <Td right>{money(n.total)}</Td>
+                      <Td right>{money(n.applied)}</Td>
+                    </tr>
+                  ))}
+              </tbody>
+            </TableShell>
+          )}
+        </Panel>
       ) : tab === "Customers" ? (
         <Panel>
           <TableShell>
@@ -387,7 +426,7 @@ function Sales() {
                 .map((c: any) => {
                   const bal = live.filter((i: any) => i.customer_id === c.id).reduce((s: number, i: any) => s + Number(i.balance), 0);
                   return (
-                    <tr key={c.id} className="row-hover hover:bg-secondary/40">
+                    <tr key={c.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/statement/$party/$id", params: { party: "customer", id: c.id } })}>
                       <Td>{c.name}</Td>
                       <Td>
                         <span className="num text-muted-foreground">{c.code}</span>
@@ -401,7 +440,7 @@ function Sales() {
                         <span className={bal > Number(c.credit_limit) ? "text-critical" : undefined}>{money(bal)}</span>
                       </Td>
                       <Td right>
-                        <div className="flex justify-end gap-0.5">
+                        <div className="flex justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
                           <RowAction onClick={() => setCustRow(c)}>Edit</RowAction>
                           <RowAction tone="danger" onClick={() => askDelete(c)}>
                             Delete
@@ -441,7 +480,7 @@ function Sales() {
             </thead>
             <tbody>
               {byCustomer.map((row) => (
-                <tr key={row.id} className="row-hover hover:bg-secondary/40">
+                <tr key={row.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/statement/$party/$id", params: { party: "customer", id: row.id } })}>
                   <Td>{row.name}</Td>
                   {row.buckets.map((value, index) => (
                     <Td key={index} right>{money(value)}</Td>
@@ -465,6 +504,7 @@ function Sales() {
         onCreated={(id) => navigate({ to: "/sales/$id", params: { id } })}
       />
 
+      <CreditNoteDialog kind="sales_credit" open={credit !== false} preset={credit || null} onOpenChange={(v) => !v && setCredit(false)} onCreated={(id) => navigate({ to: "/notes/$id", params: { id } })} />
       <PaymentDialog kind="invoice" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
       <EntityDialog table="customers" title="Customer" fields={CUSTOMER_FIELDS} row={custRow} onOpenChange={(v) => !v && setCustRow(null)} />
       {voidDialog}
