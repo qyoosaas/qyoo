@@ -510,13 +510,20 @@ export function PaymentDialog({
 export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const cats = useTable<any>("expense_categories", ["form"], (q: any) => q.order("name"));
   const banks = useTable<any>("bank_accounts", ["form"], (q: any) => q.order("name"));
-  const [f, setF] = useState({ merchant: "", date: isoToday(), gross: "", category_id: "", employee: "", method: "company_card", has_document: false, project: "", bank: "" });
+  const rates = useTable<any>("tax_rates", ["form"], (q: any) => q.eq("kind", "vat").order("code"));
+  const blank = { merchant: "", date: isoToday(), gross: "", category_id: "", employee: "", method: "company_card", has_document: false, project: "", bank: "", tax: "" };
+  const [f, setF] = useState(blank);
   useEffect(() => {
-    if (open) setF({ merchant: "", date: isoToday(), gross: "", category_id: "", employee: "", method: "company_card", has_document: false, project: "", bank: "" });
+    if (open) setF(blank);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   const set = (k: keyof typeof f, v: any) => setF((s) => ({ ...s, [k]: v }));
+  const rate = (rates.data ?? []).find((r: any) => r.id === f.tax) ?? (rates.data ?? []).find((r: any) => r.is_default);
   const gross = Number(f.gross || 0);
-  const net = gross / 1.05;
+  const rcm = rate?.code === "RCM";
+  const r = Number(rate?.rate ?? 0);
+  const net = rcm ? gross : gross / (1 + r);
+  const vatAmt = rcm ? gross * r : gross - net;
 
   const mut = useAction(
     async () => {
@@ -532,9 +539,10 @@ export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenCha
         has_document: f.has_document,
         project: f.project || null,
         bank_account_id: f.bank || null,
+        tax_rate_id: rate?.id ?? null,
       });
     },
-    { success: "Expense captured, VAT split and posted", onSuccess: () => onOpenChange(false) },
+    { success: "Expense captured and posted", onSuccess: () => onOpenChange(false) },
   );
 
   return (
@@ -542,18 +550,27 @@ export function ExpenseDialog({ open, onOpenChange }: { open: boolean; onOpenCha
       open={open}
       onOpenChange={onOpenChange}
       title="Record expense"
-      description="Enter the amount paid including VAT. Qyoo splits the recoverable VAT, posts to the ledger and writes the bank line."
+      description="Enter the amount paid and choose the VAT treatment on the receipt. Qyoo posts to the ledger and writes the bank line."
       onSubmit={() => mut.mutate(undefined as never)}
       submitLabel="Record & post"
       busy={mut.isPending}
-      extra={gross > 0 ? `Net ${money(net)} · VAT ${money(gross - net)}` : null}
+      extra={gross > 0 ? `Net ${money(net)} · VAT ${money(vatAmt)}${rcm ? " (self-assessed)" : ""}` : null}
     >
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Merchant" className="sm:col-span-2">
           <Input value={f.merchant} onChange={(e) => set("merchant", e.target.value)} className="h-8 text-[13px]" />
         </Field>
-        <Field label="Amount paid (incl. VAT)">
+        <Field label="Amount paid">
           <Input type="number" step="0.01" min={0} value={f.gross} onChange={(e) => set("gross", e.target.value)} className="num h-8 text-[13px]" />
+        </Field>
+        <Field label="VAT treatment">
+          <NativeSelect value={rate?.id ?? ""} onChange={(v) => set("tax", v)}>
+            {(rates.data ?? []).map((t: any) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </NativeSelect>
         </Field>
         <Field label="Date">
           <Input type="date" value={f.date} onChange={(e) => set("date", e.target.value)} className="h-8 text-[13px]" />
