@@ -8,6 +8,7 @@ import { PageHeader, Panel, Loading, AutomationNote, Pill } from "@/components/f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { TaxRatesPanel } from "@/components/fin/tax-rates-panel";
 import type { Json } from "@/integrations/supabase/types";
 
 type SettingValue = Json;
@@ -136,7 +137,6 @@ function Settings() {
   const { data: company } = useCompany();
   const settings = useTable<any>("settings", ["st"], (q: any) => q.order("group_name"));
   const roles = useTable<any>("profiles", ["st"]);
-  const tax = useTable<any>("tax_rates", ["st"]);
   const [drafts, setDrafts] = useState<Record<string, SettingValue>>({});
 
   const groups = new Map<string, any[]>();
@@ -189,21 +189,7 @@ function Settings() {
           </dl>
         </Panel>
 
-        <Panel title="Tax rates">
-          <ul className="divide-y divide-border">
-            {(tax.data ?? []).map((t: any) => (
-              <li key={t.id} className="flex items-center justify-between px-4 py-2.5 text-[13px]">
-                <div>
-                  <span className="num text-muted-foreground">{t.code}</span> {t.name}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="num">{(Number(t.rate) * 100).toFixed(0)}%</span>
-                  {t.is_default ? <Pill tone="signal">Default</Pill> : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Panel>
+        <TaxRatesPanel />
       </div>
 
       {settings.isLoading ? (
