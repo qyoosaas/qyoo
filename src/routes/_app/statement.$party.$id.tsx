@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_app/statement/$party/$id")({
   component: Statement,
 });
 
-type Row = { id: string; date: string; type: string; number: string; detail: string; debit: number; credit: number; open?: { due: string; balance: number }; go: () => void };
+type Row = { id: string; date: string; type: string; number: string; detail: string; debit: number; credit: number; open?: { due: string; balance: number } | undefined; go: () => unknown };
 
 const BUCKETS = [
   { label: "Current", min: -99999, max: 0 },

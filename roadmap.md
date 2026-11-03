@@ -7,6 +7,8 @@
 
 - [x] Document engine completion: real XLSX/PDF text reading (no invented data), product matching, atomic approval, Action Required alerts, delivery notes / credit notes / quotations
 
+- [x] Account ledger pages from trial balance, customer/supplier statements of account, credit & debit notes, selectable expense VAT and editable VAT rates
+
 ## Open
 - [x] Complete the frontend UI/UX readiness pass across every main page, detail page, dialog, and responsive state
 - [x] Standardize detail-page navigation, headers, action hierarchy, record links, loading/empty/error states, and confirmations

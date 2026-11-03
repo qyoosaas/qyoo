@@ -153,7 +153,10 @@ function Expenses() {
                     <Td>{catById.get(e.category_id) ?? "—"}</Td>
                     <Td>{e.employee ?? "—"}</Td>
                     <Td right>{money(e.amount)}</Td>
-                    <Td right>{money(e.vat)}</Td>
+                    <Td right>
+                      {money(e.vat)}
+                      <span className="ml-1 text-[11px] text-muted-foreground">{e.tax_code ?? "VAT5"}</span>
+                    </Td>
                     <Td>
                       {e.has_document ? (
                         <Pill tone="success">Attached</Pill>

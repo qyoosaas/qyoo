@@ -12,3 +12,4 @@
 - Use shared `PageHeader`, `SegmentedTabs`, and responsive `AppShell` patterns for all finance screens so navigation and action hierarchy remain consistent.
 - Command-palette workflow commands navigate with an `action` search parameter that the destination page consumes and clears after opening the requested form.
 - Openable finance records use full-row pointer interaction; identifiers stay plain without hover underlines.
+- Credit/debit notes share one table (credit_notes.kind) and post through the create_credit_note RPC; why: one atomic posting path for both sides.
