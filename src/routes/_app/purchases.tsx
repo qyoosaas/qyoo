@@ -14,8 +14,10 @@ import {
   statusTone,
   AutomationNote,
   SegmentedTabs,
+  EmptyState,
 } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
+import { CreditNoteDialog } from "@/components/fin/credit-note-dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { DocumentDialog, PaymentDialog, EntityDialog, RowAction, useVoid, useDeleteRow, type EntityField } from "@/components/fin/forms";
@@ -37,7 +39,7 @@ export const Route = createFileRoute("/_app/purchases")({
   component: Purchases,
 });
 
-const TABS = ["Bills", "Orders", "Goods receipts", "Payments", "Suppliers", "Ageing"] as const;
+const TABS = ["Bills", "Orders", "Goods receipts", "Payments", "Debit notes", "Suppliers", "Ageing"] as const;
 
 const SUPPLIER_FIELDS: EntityField[] = [
   { key: "name", label: "Name", span: 2, required: true },
@@ -71,6 +73,8 @@ function Purchases() {
   const [term, setTerm] = useState("");
   const [newDoc, setNewDoc] = useState<"bill" | "po" | null>(null);
   const [payDoc, setPayDoc] = useState<any | null>(null);
+  const [debit, setDebit] = useState<{ party_id: string; doc_id: string } | null | false>(false);
+  const notes = useTable<any>("credit_notes", ["p"], (q: any) => q.eq("kind", "purchase_debit").order("note_date", { ascending: false }));
   const [supRow, setSupRow] = useState<any | null>(null);
   const { askVoid, dialog: voidDialog } = useVoid();
   const { askDelete, dialog: delDialog } = useDeleteRow("suppliers", "Supplier");
@@ -220,6 +224,7 @@ function Purchases() {
                     <Td right>
                       <div className="flex justify-end gap-0.5">
                         {Number(b.balance) > 0 && b.status !== "cancelled" ? <RowAction onClick={() => setPayDoc(b)}>Pay</RowAction> : null}
+                        {b.status !== "cancelled" && b.status !== "draft" ? <RowAction onClick={() => setDebit({ party_id: b.supplier_id, doc_id: b.id })}>Debit</RowAction> : null}
                         {b.status !== "cancelled" ? (
                           <RowAction tone="danger" onClick={() => askVoid({ type: "supplier_bill", id: b.id, label: b.number })}>
                             Void
@@ -340,6 +345,39 @@ function Purchases() {
             </tbody>
           </TableShell>
         </Panel>
+      ) : tab === "Debit notes" ? (
+        <Panel
+          title="Debit notes"
+          actions={
+            <Button size="sm" variant="ghost" className="h-7 px-2 text-[12px]" onClick={() => setDebit(null)}>
+              <Plus className="mr-1 h-3.5 w-3.5" /> New debit note
+            </Button>
+          }
+        >
+          {!(notes.data ?? []).length ? (
+            <EmptyState title="No debit notes yet" hint="Raise one here or from a bill's Debit action." />
+          ) : (
+            <TableShell>
+              <thead>
+                <tr><Th>Debit note</Th><Th>Supplier</Th><Th>Date</Th><Th>Reason</Th><Th right>Total</Th><Th right>Applied</Th></tr>
+              </thead>
+              <tbody>
+                {(notes.data ?? [])
+                  .filter((n: any) => filter(n.number) || filter(nameById.get(n.supplier_id) ?? ""))
+                  .map((n: any) => (
+                    <tr key={n.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/notes/$id", params: { id: n.id } })}>
+                      <Td><span className="num font-medium">{n.number}</span></Td>
+                      <Td>{nameById.get(n.supplier_id) ?? "—"}</Td>
+                      <Td>{shortDate(n.note_date)}</Td>
+                      <Td className="max-w-[260px] truncate text-muted-foreground">{n.reason ?? "—"}</Td>
+                      <Td right>{money(n.total)}</Td>
+                      <Td right>{money(n.applied)}</Td>
+                    </tr>
+                  ))}
+              </tbody>
+            </TableShell>
+          )}
+        </Panel>
       ) : tab === "Ageing" ? (
         <Panel title="Payables ageing" description="Open supplier balances by days past due">
           <div className="grid gap-px bg-border sm:grid-cols-5">
@@ -367,7 +405,7 @@ function Purchases() {
             </thead>
             <tbody>
               {bySupplier.map((r) => (
-                <tr key={r.id} className="row-hover hover:bg-secondary/40">
+                <tr key={r.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/statement/$party/$id", params: { party: "supplier", id: r.id } })}>
                   <Td>{r.name}</Td>
                   {r.buckets.map((v, i) => (
                     <Td key={i} right>
@@ -409,7 +447,7 @@ function Purchases() {
                     .filter((b: any) => b.supplier_id === s.id)
                     .reduce((t: number, b: any) => t + Number(b.balance), 0);
                   return (
-                    <tr key={s.id} className="row-hover hover:bg-secondary/40">
+                    <tr key={s.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={() => navigate({ to: "/statement/$party/$id", params: { party: "supplier", id: s.id } })}>
                       <Td>{s.name}</Td>
                       <Td>
                         <span className="num text-muted-foreground">{s.code}</span>
@@ -437,6 +475,7 @@ function Purchases() {
 
       <DocumentDialog kind="bill" open={newDoc === "bill"} onOpenChange={(v) => !v && setNewDoc(null)} />
       <DocumentDialog kind="po" open={newDoc === "po"} onOpenChange={(v) => !v && setNewDoc(null)} />
+      <CreditNoteDialog kind="purchase_debit" open={debit !== false} preset={debit || null} onOpenChange={(v) => !v && setDebit(false)} onCreated={(id) => navigate({ to: "/notes/$id", params: { id } })} />
       <PaymentDialog kind="bill" doc={payDoc} onOpenChange={(v) => !v && setPayDoc(null)} />
       <EntityDialog table="suppliers" title="Supplier" fields={SUPPLIER_FIELDS} row={supRow} onOpenChange={(v) => !v && setSupRow(null)} />
       {voidDialog}
