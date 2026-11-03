@@ -20,18 +20,18 @@ export function TaxRatesPanel() {
   const [edit, setEdit] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const save = async () => {
+  const save = async (): Promise<void> => {
     if (!edit) return;
     const rate = Number(edit.rate);
-    if (!edit.code.trim() || !edit.name.trim()) return toast.error("Enter a code and a name");
-    if (!(rate >= 0 && rate <= 100)) return toast.error("Rate must be between 0 and 100%");
+    if (!edit.code.trim() || !edit.name.trim()) { toast.error("Enter a code and a name"); return; }
+    if (!(rate >= 0 && rate <= 100)) { toast.error("Rate must be between 0 and 100%"); return; }
     setBusy(true);
     const db = supabase as any;
     if (edit.is_default) await db.from("tax_rates").update({ is_default: false }).eq("company_id", COMPANY_ID).neq("id", edit.id ?? "00000000-0000-0000-0000-000000000000");
     const row = { company_id: COMPANY_ID, code: edit.code.trim().toUpperCase(), name: edit.name.trim(), rate: rate / 100, kind: "vat", is_default: edit.is_default };
     const { error } = edit.id ? await db.from("tax_rates").update(row).eq("id", edit.id) : await db.from("tax_rates").insert(row);
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await qc.invalidateQueries({ queryKey: ["tax_rates"] });
     toast.success("VAT rate saved");
     setEdit(null);
