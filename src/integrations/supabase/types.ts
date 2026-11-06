@@ -2891,6 +2891,15 @@ export type Database = {
         Returns: Json
       }
       automation_selftest: { Args: never; Returns: Json }
+      complete_production_order: {
+        Args: {
+          p_actuals: Json
+          p_date: string
+          p_order: string
+          p_output: number
+        }
+        Returns: string
+      }
       create_credit_note: {
         Args: {
           p_company: string
@@ -2939,6 +2948,10 @@ export type Database = {
           p_notes?: string
           p_so: string
         }
+        Returns: string
+      }
+      create_production_order: {
+        Args: { p_bom: string; p_end: string; p_qty: number; p_start: string }
         Returns: string
       }
       create_purchase_order: {
@@ -3130,6 +3143,10 @@ export type Database = {
       run_automation: { Args: { p_company: string }; Returns: Json }
       set_period_closed: {
         Args: { p_closed: boolean; p_period: string }
+        Returns: undefined
+      }
+      set_production_status: {
+        Args: { p_order: string; p_status: string }
         Returns: undefined
       }
       so_match_lines: {
