@@ -4,11 +4,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable, useCompany } from "@/lib/fin-data";
 import { titleCase, shortDate } from "@/lib/format";
-import { PageHeader, Panel, Loading, AutomationNote, Pill } from "@/components/fin/primitives";
+import { PageHeader, Panel, Loading, AutomationNote } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { TaxRatesPanel } from "@/components/fin/tax-rates-panel";
+import { TeamPanel } from "@/components/fin/team-panel";
 import type { Json } from "@/integrations/supabase/types";
 
 type SettingValue = Json;
@@ -136,11 +137,10 @@ function Settings() {
   const qc = useQueryClient();
   const { data: company } = useCompany();
   const settings = useTable<any>("settings", ["st"], (q: any) => q.order("group_name"));
-  const roles = useTable<any>("profiles", ["st"]);
   const [drafts, setDrafts] = useState<Record<string, SettingValue>>({});
 
   const groups = new Map<string, any[]>();
-  (settings.data ?? []).forEach((s: any) => {
+  (settings.data ?? []).filter((s: any) => s.group_name !== "tax").forEach((s: any) => {
     groups.set(s.group_name, [...(groups.get(s.group_name) ?? []), s]);
   });
 
@@ -215,24 +215,7 @@ function Settings() {
         ))
       )}
 
-      <Panel title="Team" description="Roles are enforced in the database, not the browser">
-        <ul className="divide-y divide-border">
-          {(roles.data ?? []).map((p: any) => (
-            <li key={p.id} className="flex items-center justify-between px-4 py-2.5 text-[13px]">
-              <div>
-                <div className="font-medium">{p.full_name ?? p.email}</div>
-                <div className="text-xs text-muted-foreground">{p.email} · {p.job_title ?? "—"}</div>
-              </div>
-              <Pill>Member</Pill>
-            </li>
-          ))}
-          {(roles.data ?? []).length === 0 ? (
-            <li className="px-4 py-6 text-center text-[13px] text-muted-foreground">
-              Team members appear here once they sign in.
-            </li>
-          ) : null}
-        </ul>
-      </Panel>
+      <TeamPanel />
     </>
   );
 }
