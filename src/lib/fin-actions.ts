@@ -22,6 +22,23 @@ const rpc = async <T = unknown>(fn: string, args: Record<string, unknown>): Prom
 };
 
 export const actions = {
+  createProductionOrder: (p: { bom_id: string; quantity: number; start_date: string; end_date?: string | null }) =>
+    rpc<string>("create_production_order", { p_bom: p.bom_id, p_qty: p.quantity, p_start: p.start_date, p_end: p.end_date ?? null }),
+  setProductionStatus: (p: { id: string; status: "in_progress" | "cancelled" }) =>
+    rpc<void>("set_production_status", { p_order: p.id, p_status: p.status }),
+  completeProductionOrder: (p: { id: string; output: number; actuals: { id: string; actual_quantity: number }[]; date: string }) =>
+    rpc<string>("complete_production_order", { p_order: p.id, p_output: p.output, p_actuals: p.actuals, p_date: p.date }),
+  saveBom: async (p: { name: string; product_id: string; output_quantity: number; labour_cost: number; overhead_cost: number; items: { product_id: string; quantity_per_unit: number }[] }) => {
+    const db = supabase as any;
+    if (!p.product_id) throw new Error("Choose the product this BOM makes");
+    const items = p.items.filter((i) => i.product_id && i.quantity_per_unit > 0);
+    if (!items.length) throw new Error("Add at least one material");
+    const { data, error } = await db.from("boms").insert({ company_id: COMPANY_ID, name: p.name || "BOM", product_id: p.product_id, output_quantity: p.output_quantity || 1, labour_cost: p.labour_cost || 0, overhead_cost: p.overhead_cost || 0, is_active: true }).select("id").single();
+    if (error) throw new Error(error.message);
+    const r = await db.from("bom_items").insert(items.map((i) => ({ ...i, bom_id: data.id })));
+    if (r.error) { await db.from("boms").delete().eq("id", data.id); throw new Error(r.error.message); }
+    return data.id as string;
+  },
   createInvoice: (p: { customer_id: string; invoice_date: string; due_date?: string | null; items: LineInput[]; notes?: string; post?: boolean }) =>
     rpc<string>("create_invoice", {
       p_company: COMPANY_ID,
