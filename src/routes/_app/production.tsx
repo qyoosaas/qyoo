@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/fin-data";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
 import { money, num, shortDate, titleCase, pct } from "@/lib/format";
@@ -25,16 +27,28 @@ export const Route = createFileRoute("/_app/production")({
   component: Production,
 });
 
+/** Child tables have no company column; RLS still scopes them. */
+function useChildRows(table: string) {
+  return useQuery({
+    queryKey: [table, "pr"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from(table).select("*");
+      if (error) throw new Error(error.message);
+      return (data ?? []) as any[];
+    },
+  });
+}
+
 const FILTERS = ["All", "Planned", "In progress", "Completed"] as const;
 type BomLine = { product_id: string; quantity_per_unit: string };
 
 function Production() {
   const orders = useTable<any>("production_orders", ["pr"], (q: any) => q.order("created_at", { ascending: false }));
   const boms = useTable<any>("boms", ["pr"]);
-  const bomItems = useTable<any>("bom_items", ["pr"], (q: any) => q);
+  const bomItems = useChildRows("bom_items");
   const products = useTable<any>("products", ["pr"]);
   const balances = useTable<any>("inventory_balances", ["pr"]);
-  const materials = useTable<any>("production_materials", ["pr"], (q: any) => q);
+  const materials = useChildRows("production_materials");
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [newOrder, setNewOrder] = useState<{ bom_id: string; quantity: string; start: string; end: string } | null>(null);
