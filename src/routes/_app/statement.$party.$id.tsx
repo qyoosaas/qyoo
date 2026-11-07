@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID, money, shortDate, daysBetween } from "@/lib/format";
-import { PageHeader, Panel, Metric, Loading, TableShell, Th, Td, EmptyState } from "@/components/fin/primitives";
+import { PageHeader, Panel, Metric, Loading, TableShell, Th, Td, EmptyState, SegmentedTabs, Pill } from "@/components/fin/primitives";
 import { PeriodPicker, presetPeriods, type Period } from "@/components/fin/period-picker";
 import { NativeSelect } from "@/components/fin/forms";
 import { Input } from "@/components/ui/input";
@@ -41,6 +41,8 @@ function Statement() {
   const [type, setType] = useState("all");
   const [term, setTerm] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
+  const [mode, setMode] = useState<"Ledger-wise" | "Bill-wise">("Ledger-wise");
+  const [billStatus, setBillStatus] = useState("all");
 
   const q = useQuery({
     queryKey: ["statement", party, id],
@@ -144,7 +146,37 @@ function Statement() {
   const types = isCustomer ? ["Invoice", "Receipt", "Credit note"] : ["Bill", "Payment", "Debit note"];
   const back = isCustomer ? { to: "/sales", label: "Sales" } : { to: "/purchases", label: "Purchases" };
 
+  const bills = useMemo(() => {
+    if (!q.data) return [];
+    const today = new Date();
+    return q.data.docs
+      .map((d: any) => {
+        const date = isCustomer ? d.invoice_date : d.bill_date;
+        const notes = q.data!.notes.filter((n: any) => (isCustomer ? n.invoice_id : n.supplier_bill_id) === d.id).reduce((s: number, n: any) => s + Number(n.total), 0);
+        const total = Number(d.total);
+        const balance = Math.max(0, Number(d.balance));
+        const paid = Math.max(0, total - balance - notes);
+        const overdue = balance > 0.005 ? Math.max(0, daysBetween(d.due_date, today)) : 0;
+        const status = balance <= 0.005 ? "Paid" : overdue > 0 ? "Overdue" : balance < total - 0.005 ? "Partially paid" : "Open";
+        return { id: d.id, date, due: d.due_date, number: d.number, ref: d.supplier_ref ?? "", total, paid, notes, balance, overdue, status,
+          go: () => (isCustomer ? navigate({ to: "/invoices/$id", params: { id: d.id } }) : navigate({ to: "/docs/$type/$id", params: { type: "bill", id: d.id } })) };
+      })
+      .filter((b: any) => b.date >= period.from && b.date <= period.to)
+      .filter((b: any) => billStatus === "all" || (billStatus === "open" ? b.balance > 0.005 : b.status === "Overdue"))
+      .filter((b: any) => !term || `${b.number} ${b.ref}`.toLowerCase().includes(term.toLowerCase()))
+      .sort((a: any, b: any) => a.date.localeCompare(b.date));
+  }, [q.data, isCustomer, navigate, period, billStatus, term]);
+
   const exportCsv = () => {
+    if (mode === "Bill-wise") {
+      const head = "Date,Number,Due,Amount,Paid,Notes,Outstanding,Days overdue,Status";
+      const body = bills.map((b: any) => [b.date, b.number, b.due, b.total, b.paid.toFixed(2), b.notes, b.balance, b.overdue, b.status].join(","));
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([[head, ...body].join("\n")], { type: "text/csv" }));
+      a.download = `bills-${q.data?.p?.name ?? id}-${period.from}-${period.to}.csv`;
+      a.click();
+      return;
+    }
     const head = "Date,Type,Number,Detail,Debit,Credit,Balance";
     const body = view.shown.map((r) => [r.date, r.type, r.number, `"${r.detail.replace(/"/g, "'")}"`, r.debit, r.credit, r.balance.toFixed(2)].join(","));
     const a = document.createElement("a");
@@ -182,7 +214,9 @@ function Statement() {
         </div>
       </Panel>
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-2">
+        <SegmentedTabs items={["Ledger-wise", "Bill-wise"] as const} value={mode} onChange={setMode} label="Statement view" />
         <PeriodPicker value={period} onChange={setPeriod} />
+        {mode === "Ledger-wise" ? (<>
         <NativeSelect value={type} onChange={setType} className="w-[150px]">
           <option value="all">All documents</option>
           {types.map((t) => <option key={t} value={t}>{t}s</option>)}
@@ -191,8 +225,48 @@ function Statement() {
           <option value="all">All items</option>
           <option value="open">Open items only</option>
         </NativeSelect>
+        </>) : (
+        <NativeSelect value={billStatus} onChange={setBillStatus} className="w-[150px]">
+          <option value="all">All {isCustomer ? "invoices" : "bills"}</option>
+          <option value="open">Open only</option>
+          <option value="overdue">Overdue only</option>
+        </NativeSelect>
+        )}
         <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Number or reference…" className="ml-auto h-8 w-[220px] text-[13px]" />
       </div>
+      {mode === "Bill-wise" ? (
+      <Panel>
+        {!bills.length ? (
+          <EmptyState title={`No ${isCustomer ? "invoices" : "bills"} in this range`} hint="Change the dates or filters." />
+        ) : (
+          <TableShell>
+            <thead>
+              <tr><Th>Date</Th><Th>Number</Th><Th>Due</Th><Th right>Amount</Th><Th right>{isCustomer ? "Received" : "Paid"}</Th><Th right>{isCustomer ? "Credit notes" : "Debit notes"}</Th><Th right>Outstanding</Th><Th right>Overdue</Th><Th>Status</Th></tr>
+            </thead>
+            <tbody>
+              {bills.map((b: any) => (
+                <tr key={b.id} className="row-hover cursor-pointer hover:bg-secondary/40" onClick={b.go}>
+                  <Td>{shortDate(b.date)}</Td>
+                  <Td><span className="num font-medium">{b.number}</span></Td>
+                  <Td>{shortDate(b.due)}</Td>
+                  <Td right>{money(b.total)}</Td>
+                  <Td right>{b.paid ? money(b.paid) : ""}</Td>
+                  <Td right>{b.notes ? money(b.notes) : ""}</Td>
+                  <Td right>{money(b.balance)}</Td>
+                  <Td right>{b.overdue ? `${b.overdue} d` : ""}</Td>
+                  <Td><Pill tone={b.status === "Paid" ? "success" : b.status === "Overdue" ? "critical" : b.status === "Partially paid" ? "warning" : "neutral"}>{b.status}</Pill></Td>
+                </tr>
+              ))}
+              <tr className="font-medium"><Td>Total</Td><Td>{""}</Td><Td>{""}</Td>
+                <Td right>{money(bills.reduce((s: number, b: any) => s + b.total, 0))}</Td>
+                <Td right>{money(bills.reduce((s: number, b: any) => s + b.paid, 0))}</Td>
+                <Td right>{money(bills.reduce((s: number, b: any) => s + b.notes, 0))}</Td>
+                <Td right>{money(bills.reduce((s: number, b: any) => s + b.balance, 0))}</Td><Td right>{""}</Td><Td>{""}</Td></tr>
+            </tbody>
+          </TableShell>
+        )}
+      </Panel>
+      ) : (
       <Panel>
         {!view.shown.length ? (
           <EmptyState title="No transactions in this range" hint="Change the dates or filters." />
@@ -219,6 +293,7 @@ function Statement() {
           </TableShell>
         )}
       </Panel>
+      )}
     </>
   );
 }
