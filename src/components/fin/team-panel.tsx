@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { listTeam, inviteMember, updateMember, removeMember, TEAM_ROLES, type TeamRole } from "@/lib/team.functions";
+import { listTeam, inviteMember, updateMember, removeMember, TEAM_ROLES, type TeamRole, type TeamMember } from "@/lib/team.functions";
 import { Panel, Pill, Loading } from "./primitives";
 import { Field, FormDialog, NativeSelect, RowAction } from "./forms";
 import { Input } from "@/components/ui/input";
@@ -75,7 +75,7 @@ export function TeamPanel() {
         <p className="px-4 py-6 text-center text-[13px] text-muted-foreground">Team could not be loaded. Refresh to try again.</p>
       ) : (
         <ul className="divide-y divide-border">
-          {(team.data?.members ?? []).map((m) => (
+          {((team.data?.members ?? []) as TeamMember[]).map((m) => (
             <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-[13px]">
               <div className="min-w-0">
                 <div className="font-medium">{m.full_name || m.email}{m.is_you ? <span className="ml-1.5 text-xs text-muted-foreground">(you)</span> : null}</div>
