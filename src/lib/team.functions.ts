@@ -4,6 +4,7 @@ import { COMPANY_ID } from "@/lib/format";
 
 export const TEAM_ROLES = ["admin", "finance_manager", "accountant", "viewer"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
+export type TeamMember = { id: string; full_name: string | null; email: string; job_title: string | null; role: TeamRole; status: "active" | "invited"; last_sign_in_at: string | null; is_you: boolean };
 
 /**
  * Team management. Roles live in user_roles and are written only here, with the
@@ -45,7 +46,7 @@ export const listTeam = createServerFn({ method: "GET" })
       db.auth.admin.listUsers({ perPage: 200 }),
     ]);
     const byId = new Map<string, any>((users?.users ?? []).map((u: any) => [u.id, u]));
-    const members = (profiles ?? []).map((p: any) => {
+    const members: TeamMember[] = (profiles ?? []).map((p: any): TeamMember => {
       const u = byId.get(p.id);
       return {
         id: p.id as string,
