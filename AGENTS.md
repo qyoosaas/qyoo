@@ -13,3 +13,5 @@
 - Command-palette workflow commands navigate with an `action` search parameter that the destination page consumes and clears after opening the requested form.
 - Openable finance records use full-row pointer interaction; identifiers stay plain without hover underlines.
 - Credit/debit notes share one table (credit_notes.kind) and post through the create_credit_note RPC; why: one atomic posting path for both sides.
+- Team roles live in user_roles and are written only by server functions in src/lib/team.functions.ts (service client after an admin check); why: the browser must never grant itself roles.
+- Production posts only on completion via complete_production_order (materials at weighted-average cost, BOM labour/overhead absorbed to 5200, finished goods to 1230); planning/starting posts nothing; why: matches the orders-never-post rule.
