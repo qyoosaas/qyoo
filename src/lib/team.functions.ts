@@ -26,8 +26,8 @@ async function ensureCaller(ctx: { supabase: any; userId: string; claims: any })
   if (!prof) {
     await db.from("profiles").insert({ id: ctx.userId, company_id: COMPANY_ID, email: ctx.claims?.email ?? null, full_name: ctx.claims?.user_metadata?.full_name ?? null });
   }
-  const { data: isAdmin } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
-  return { db, isAdmin: !!isAdmin };
+  const { data: mine } = await ctx.supabase.from("user_roles").select("role").eq("user_id", ctx.userId).eq("company_id", COMPANY_ID).maybeSingle();
+  return { db, isAdmin: mine?.role === "admin" };
 }
 
 async function requireAdmin(ctx: any) {
