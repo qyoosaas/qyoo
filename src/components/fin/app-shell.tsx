@@ -1,3 +1,4 @@
+import { useRole } from "@/hooks/use-role";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -250,11 +251,21 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <main className="min-w-0 flex-1 px-4 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-[1240px] space-y-6">{children}</div>
+          <div className="mx-auto w-full max-w-[1240px] space-y-6"><RoleNotice />{children}</div>
         </main>
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+    </div>
+  );
+}
+
+function RoleNotice() {
+  const { role } = useRole();
+  if (role !== "viewer") return null;
+  return (
+    <div className="rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
+      You have view-only access. You can browse and export, but changes need an Editor or Admin.
     </div>
   );
 }

@@ -56,7 +56,7 @@ export const listTeam = createServerFn({ method: "GET" })
         full_name: (p.full_name ?? null) as string | null,
         email: (p.email ?? u?.email ?? "") as string,
         job_title: (p.job_title ?? null) as string | null,
-        role: normalizeRole((roles ?? []).find((r: any) => r.user_id === p.id)?.role ?? "viewer") as string,
+        role: normalizeRole((roles ?? []).find((r: any) => r.user_id === p.id)?.role ?? "viewer"),
         status: (u?.last_sign_in_at ? "active" : "invited") as "active" | "invited",
         last_sign_in_at: (u?.last_sign_in_at ?? null) as string | null,
         is_you: p.id === context.userId,
