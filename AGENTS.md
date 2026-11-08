@@ -15,3 +15,4 @@
 - Credit/debit notes share one table (credit_notes.kind) and post through the create_credit_note RPC; why: one atomic posting path for both sides.
 - Team roles live in user_roles and are written only by server functions in src/lib/team.functions.ts (service client after an admin check); why: the browser must never grant itself roles.
 - Production posts only on completion via complete_production_order (materials at weighted-average cost, BOM labour/overhead absorbed to 5200, finished goods to 1230); planning/starting posts nothing; why: matches the orders-never-post rule.
+- Access control: roles are admin/editor/viewer, enforced by RESTRICTIVE RLS write policies using public.can_edit()/is_admin() (settings, tax_rates, accounting_periods, companies are admin-only); UI role checks are display-only. Why: RPCs are security invoker, so RLS covers every write path.
