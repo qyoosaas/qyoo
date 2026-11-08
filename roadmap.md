@@ -9,6 +9,8 @@
 
 - [x] Account ledger pages from trial balance, customer/supplier statements of account, credit & debit notes, selectable expense VAT and editable VAT rates
 
+- [x] Statement bill-wise/ledger-wise toggle, team management in Settings, end-to-end production (plan → start → complete)
+
 ## Open
 - [x] Complete the frontend UI/UX readiness pass across every main page, detail page, dialog, and responsive state
 - [x] Standardize detail-page navigation, headers, action hierarchy, record links, loading/empty/error states, and confirmations
@@ -18,3 +20,4 @@
 - [x] Replace code-style settings values with business controls and standardize openable records as full-row pointer targets
 - [ ] Swap the local heuristic reader for the self-hosted PaddleOCR / PP-StructureV3 / Docling service (set DOC_AI_URL when it is running)
 - [ ] Remove leftover QA test data (bank lines "QA STATEMENT TEST", uploaded statement.csv) when the user confirms
+- [ ] Remove QA production order PRO-40113 when the user confirms
