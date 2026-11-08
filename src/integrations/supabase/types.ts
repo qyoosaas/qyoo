@@ -2891,6 +2891,7 @@ export type Database = {
         Returns: Json
       }
       automation_selftest: { Args: never; Returns: Json }
+      can_edit: { Args: never; Returns: boolean }
       complete_production_order: {
         Args: {
           p_actuals: Json
@@ -3000,6 +3001,10 @@ export type Database = {
             }
             Returns: string
           }
+      current_app_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       deliver_goods: {
         Args: { p_actor?: string; p_date?: string; p_lines: Json; p_so: string }
         Returns: string
@@ -3020,6 +3025,7 @@ export type Database = {
         }
         Returns: Json
       }
+      is_admin: { Args: never; Returns: boolean }
       move_inventory: {
         Args: {
           p_company: string

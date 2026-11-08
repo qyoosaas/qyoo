@@ -43,6 +43,13 @@
       "when": 1794129240238,
       "tag": "0005_add_editor_role",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794129254755,
+      "tag": "0006_three_role_access",
+      "breakpoints": true
     }
   ]
 }
