@@ -32,7 +32,7 @@ const RULES: Rule[] = [
   },
   {
     test: /permission denied|row-level security/i,
-    message: "You do not have permission to perform this action. Ask an administrator for access.",
+    message: "Your role does not allow this. Viewers are read-only, and settings, VAT rates, period close and team are admin-only. Ask an admin for access.",
   },
   {
     test: /JWT|not authenticated|401/i,
