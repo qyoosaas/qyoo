@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { COMPANY_ID } from "@/lib/format";
 
-export const TEAM_ROLES = ["admin", "finance_manager", "accountant", "viewer"] as const;
+export const TEAM_ROLES = ["admin", "editor", "viewer"] as const;
 export type TeamRole = (typeof TEAM_ROLES)[number];
+export function normalizeRole(r: string): TeamRole {
+  return r === "admin" ? "admin" : r === "viewer" ? "viewer" : "editor";
+}
 export type TeamMember = { id: string; full_name: string | null; email: string; job_title: string | null; role: TeamRole; status: "active" | "invited"; last_sign_in_at: string | null; is_you: boolean };
 
 /**
@@ -53,7 +56,7 @@ export const listTeam = createServerFn({ method: "GET" })
         full_name: (p.full_name ?? null) as string | null,
         email: (p.email ?? u?.email ?? "") as string,
         job_title: (p.job_title ?? null) as string | null,
-        role: ((roles ?? []).find((r: any) => r.user_id === p.id)?.role ?? "viewer") as TeamRole,
+        role: normalizeRole((roles ?? []).find((r: any) => r.user_id === p.id)?.role ?? "viewer"),
         status: (u?.last_sign_in_at ? "active" : "invited") as "active" | "invited",
         last_sign_in_at: (u?.last_sign_in_at ?? null) as string | null,
         is_you: p.id === context.userId,

@@ -12,12 +12,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const ROLE_LABEL: Record<TeamRole, string> = { admin: "Admin", finance_manager: "Finance manager", accountant: "Accountant", viewer: "Viewer" };
+const ROLE_LABEL: Record<TeamRole, string> = { admin: "Admin", editor: "Editor", viewer: "Viewer" };
 const ROLE_HINT: Record<TeamRole, string> = {
-  admin: "Everything, including team and settings",
-  finance_manager: "Approve, post and close periods",
-  accountant: "Record and prepare transactions",
-  viewer: "Read-only access",
+  admin: "Full access: record and post transactions, manage team, settings, VAT rates and period close",
+  editor: "Create, edit, approve and post transactions, documents, banking and production. Cannot manage team, settings or close periods",
+  viewer: "Read-only: view records and reports, and export. Cannot change anything",
 };
 type Draft = { id?: string; email: string; full_name: string; job_title: string; role: TeamRole };
 
@@ -66,7 +65,7 @@ export function TeamPanel() {
       title="Team"
       description="Roles are enforced on the server, not the browser"
       actions={canManage ? (
-        <Button size="sm" variant="ghost" className="h-7 px-2 text-[12px]" onClick={() => setEdit({ email: "", full_name: "", job_title: "", role: "accountant" })}>
+        <Button size="sm" variant="ghost" className="h-7 px-2 text-[12px]" onClick={() => setEdit({ email: "", full_name: "", job_title: "", role: "editor" })}>
           <Plus className="mr-1 h-3.5 w-3.5" /> Invite member
         </Button>
       ) : null}
