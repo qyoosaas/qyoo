@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/fin-data";
+import { applyWrite } from "@/lib/fin-write";
 import { COMPANY_ID } from "@/lib/format";
 import { Panel, Pill } from "./primitives";
 import { Field, FormDialog, RowAction } from "./forms";

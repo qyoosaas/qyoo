@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable, useCompany } from "@/lib/fin-data";
+import { applyWrite } from "@/lib/fin-write";
 import { titleCase, shortDate } from "@/lib/format";
 import { PageHeader, Panel, Loading, AutomationNote } from "@/components/fin/primitives";
 import { Input } from "@/components/ui/input";
@@ -147,9 +148,14 @@ function Settings() {
   const save = async (s: any) => {
     const value = drafts[s.id];
     if (value == null) return;
-    const { error } = await supabase.from("settings").update({ value }).eq("id", s.id);
-    if (error) {
-      toast.error(error.message);
+    // A restricted role's update matches no rows and raises no error, so ask for the
+    // row back: an empty result means the role was refused, not that it was saved.
+    const saved = await applyWrite(
+      () => supabase.from("settings").update({ value }).eq("id", s.id).select("id"),
+      "Only admins can change settings. Ask an admin to make this change.",
+    );
+    if (!saved.ok) {
+      toast.error(saved.message);
       return;
     }
     await qc.invalidateQueries({ queryKey: ["settings"] });
