@@ -44,8 +44,18 @@ const RULES: Rule[] = [
   },
 ];
 
+/** PostgREST hands back a plain object, not an Error — read its message. */
+function rawMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const m = (error as { message?: unknown }).message;
+    if (typeof m === "string" && m) return m;
+  }
+  return String(error ?? "Unknown error");
+}
+
 export function humanError(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error ?? "Unknown error");
+  const raw = rawMessage(error);
   for (const rule of RULES) {
     if (rule.test.test(raw)) return rule.message || raw;
   }
