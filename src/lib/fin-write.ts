@@ -16,12 +16,19 @@ type Builder = PromiseLike<{
   error: { message: string } | null;
 }>;
 
+const REFUSED = /permission denied|row-level security|42501/i;
+
 export async function applyWrite<T = unknown[]>(
   run: () => Builder,
   denied: string,
 ): Promise<WriteOutcome<T>> {
   const { data, error } = await run();
-  if (error) return { ok: false, message: humanError(error) };
+  if (error) {
+    // The database refuses a forbidden write two ways: it silently matches no
+    // rows, or it raises a security error. Both mean "your role can't do this".
+    if (REFUSED.test(error.message ?? "")) return { ok: false, message: denied };
+    return { ok: false, message: humanError(error) };
+  }
   const changed = Array.isArray(data) ? data.length > 0 : data != null;
   if (!changed) return { ok: false, message: denied };
   return { ok: true, data: data as T };

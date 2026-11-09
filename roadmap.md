@@ -11,6 +11,8 @@
 
 - [x] Statement bill-wise/ledger-wise toggle, team management in Settings, end-to-end production (plan → start → complete)
 
+- [x] Three-role access (admin / editor / viewer) enforced by the database, with refused writes reporting the real reason instead of a false "saved"
+
 ## Open
 - [x] Complete the frontend UI/UX readiness pass across every main page, detail page, dialog, and responsive state
 - [x] Standardize detail-page navigation, headers, action hierarchy, record links, loading/empty/error states, and confirmations
