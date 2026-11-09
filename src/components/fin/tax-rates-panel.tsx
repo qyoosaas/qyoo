@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTable } from "@/lib/fin-data";
+import { applyWrite } from "@/lib/fin-write";
 import { COMPANY_ID } from "@/lib/format";
 import { Panel, Pill } from "./primitives";
 import { Field, FormDialog, RowAction } from "./forms";
@@ -27,12 +28,22 @@ export function TaxRatesPanel() {
     if (!(rate >= 0 && rate <= 100)) { toast.error("Rate must be between 0 and 100%"); return; }
     setBusy(true);
     const db = supabase as any;
-    if (edit.is_default) await db.from("tax_rates").update({ is_default: false }).eq("company_id", COMPANY_ID).neq("id", edit.id ?? "00000000-0000-0000-0000-000000000000");
     const row = { company_id: COMPANY_ID, code: edit.code.trim().toUpperCase(), name: edit.name.trim(), rate: rate / 100, kind: "vat", is_default: edit.is_default };
-    const { error } = edit.id ? await db.from("tax_rates").update(row).eq("id", edit.id) : await db.from("tax_rates").insert(row);
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
+    // Ask for the saved row back: a role the database refuses matches nothing and
+    // reports no error, so an empty result is a refusal rather than a save.
+    const saved = await applyWrite<{ id: string }[]>(
+      () => (edit.id ? db.from("tax_rates").update(row).eq("id", edit.id).select("id") : db.from("tax_rates").insert(row).select("id")),
+      "Only admins can change VAT rates. Ask an admin to make this change.",
+    );
+    if (!saved.ok) {
+      setBusy(false);
+      toast.error(saved.message);
+      return;
+    }
+    const savedId = edit.id ?? saved.data[0]?.id;
+    if (edit.is_default && savedId) await db.from("tax_rates").update({ is_default: false }).eq("company_id", COMPANY_ID).neq("id", savedId);
     await qc.invalidateQueries({ queryKey: ["tax_rates"] });
+    setBusy(false);
     toast.success("VAT rate saved");
     setEdit(null);
   };

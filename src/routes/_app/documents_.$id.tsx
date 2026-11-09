@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID, money, shortDate, titleCase } from "@/lib/format";
 import { processDocument, setDocumentType } from "@/lib/doc-intel.functions";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
+import { applyWrite } from "@/lib/fin-write";
 import {
   DOC_TYPES,
   DOC_TYPE_MAP,
@@ -179,18 +180,22 @@ function Review() {
     setSaving(true);
     try {
       const live = validateExtraction(draft);
-      const { error } = await supabase
-        .from("document_uploads")
-        .update({
-          user_corrected_data: draft as never,
-          overall_confidence: overallConfidence(draft),
-          validation: [...((row?.validation ?? []) as ValidationIssue[]).filter((i) =>
-            ["possible_duplicate", "supplier_not_found", "po_variance"].includes(i.code),
-          ), ...live] as never,
-          status: blocking(live).length ? "needs_review" : "ready",
-        })
-        .eq("id", id);
-      if (error) throw new Error(error.message);
+      const saved = await applyWrite(
+        () => supabase
+          .from("document_uploads")
+          .update({
+            user_corrected_data: draft as never,
+            overall_confidence: overallConfidence(draft),
+            validation: [...((row?.validation ?? []) as ValidationIssue[]).filter((i) =>
+              ["possible_duplicate", "supplier_not_found", "po_variance"].includes(i.code),
+            ), ...live] as never,
+            status: blocking(live).length ? "needs_review" : "ready",
+          })
+          .eq("id", id)
+          .select("id"),
+        "Your role doesn't allow editing documents. Ask an admin or editor.",
+      );
+      if (!saved.ok) throw new Error(saved.message);
       await supabase.from("document_upload_events").insert({
         document_upload_id: id,
         stage: "corrected",
