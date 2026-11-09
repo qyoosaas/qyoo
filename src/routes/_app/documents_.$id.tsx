@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { COMPANY_ID, money, shortDate, titleCase } from "@/lib/format";
 import { processDocument, setDocumentType } from "@/lib/doc-intel.functions";
 import { actions, useAction, isoToday } from "@/lib/fin-actions";
+import { applyWrite } from "@/lib/fin-write";
 import {
   DOC_TYPES,
   DOC_TYPE_MAP,
